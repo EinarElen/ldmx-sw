@@ -119,6 +119,31 @@ class CascadeStep {
   /** Set the cascade stage from integer value */
   void setStage(int stage) { stage_ = static_cast<CascadeStage>(stage); }
 
+  // --- Collision info from elementary particle collider ---
+  // These provide direct access to collision kinematics that would otherwise
+  // need to be inferred or are not available from the cascade history alone.
+
+  /** Set center-of-mass energy of this collision [GeV] */
+  void setSqrtS(double sqrtS) { sqrtS_ = sqrtS; }
+
+  /** Set direct target PDG from collider (not inferred) */
+  void setTargetPdgDirect(int pdg) { targetPdgDirect_ = pdg; }
+
+  /** Set nucleus state at time of this collision */
+  void setNucleusAtCollision(int a, int z) {
+    nucleusA_ = a;
+    nucleusZ_ = z;
+  }
+
+  /** Set lab-frame kinetic energy of bullet [GeV] */
+  void setKinEnergyLab(double ekin) { kinEnergyLab_ = ekin; }
+
+  /** Mark whether collision produced output (false = absorbed/blocked) */
+  void setCollisionSucceeded(bool success) { collisionSucceeded_ = success; }
+
+  /** Set the bias weight for this collision (1.0 = unbiased) */
+  void setBiasWeight(double weight) { biasWeight_ = weight; }
+
   // --- Getters ---
 
   int getHistoryId() const { return history_id_; }
@@ -146,6 +171,15 @@ class CascadeStep {
   bool didEscape() const { return escaped_; }
   CascadeStage getStage() const { return stage_; }
   int getStageInt() const { return static_cast<int>(stage_); }
+
+  // Collision info from elementary particle collider
+  double getSqrtS() const { return sqrtS_; }
+  int getTargetPdgDirect() const { return targetPdgDirect_; }
+  int getNucleusA() const { return nucleusA_; }
+  int getNucleusZ() const { return nucleusZ_; }
+  double getKinEnergyLab() const { return kinEnergyLab_; }
+  bool didCollisionSucceed() const { return collisionSucceeded_; }
+  double getBiasWeight() const { return biasWeight_; }
 
   // Derived quantities
   double getKineticEnergy() const;
@@ -196,7 +230,31 @@ class CascadeStep {
   /** Cascade stage classification */
   CascadeStage stage_{CascadeStage::UNKNOWN};
 
-  ClassDef(CascadeStep, 2);
+  // --- Collision info from elementary particle collider ---
+  // These are populated when the wrapper collider is enabled
+
+  /** Center-of-mass energy of this collision [GeV] */
+  double sqrtS_{0};
+
+  /** Direct target PDG from collider (not inferred from conservation) */
+  int targetPdgDirect_{0};
+
+  /** Nucleus mass number at time of collision */
+  int nucleusA_{0};
+
+  /** Nucleus charge at time of collision */
+  int nucleusZ_{0};
+
+  /** Lab-frame kinetic energy of bullet [GeV] */
+  double kinEnergyLab_{0};
+
+  /** Whether the collision produced output (false = absorbed/Pauli blocked) */
+  bool collisionSucceeded_{true};
+
+  /** Bias weight for this collision (1.0 = unbiased, <1.0 = up-biased) */
+  double biasWeight_{1.0};
+
+  ClassDef(CascadeStep, 4);  // Version 4: added bias weight
 };
 
 }  // namespace ldmx

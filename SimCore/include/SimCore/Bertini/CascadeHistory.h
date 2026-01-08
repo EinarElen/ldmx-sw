@@ -96,8 +96,11 @@ class CascadeHistory {
   /** Check if history is empty */
   bool empty() const { return steps_.empty(); }
 
-  /** Get all steps */
+  /** Get all steps (const) */
   const std::vector<CascadeStep>& getSteps() const { return steps_; }
+
+  /** Get all steps (mutable, for enrichment) */
+  std::vector<CascadeStep>& getSteps() { return steps_; }
 
   /** Get a specific step by index */
   const CascadeStep& getStep(size_t i) const { return steps_.at(i); }

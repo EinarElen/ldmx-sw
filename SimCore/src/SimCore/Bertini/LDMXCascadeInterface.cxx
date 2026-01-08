@@ -5,11 +5,19 @@
 
 #include "SimCore/Bertini/LDMXCascadeInterface.h"
 
+#include <cmath>
+
 #include <G4HadFinalState.hh>
 #include <G4HadSecondary.hh>
 
+#include "G4Event.hh"
+#include "G4EventManager.hh"
 #include "G4InuclParticleNames.hh"
 #include "SimCore/Bertini/CascadeHistoryStore.h"
+#include "SimCore/Bertini/KaonBiasedElementaryCollider.h"
+#include "SimCore/Bertini/LDMXElementaryParticleCollider.h"
+#include "SimCore/Bertini/LDMXIntraNucleiCascader.h"
+#include "SimCore/G4User/UserEventInformation.h"
 
 namespace simcore {
 namespace bertini {
@@ -244,6 +252,67 @@ G4HadFinalState* LDMXCascadeInterface::ApplyYourself(
   // calling this method. G4HadProjectile doesn't provide track access.
   // The PhotoNuclearModel or process should set this before invoking the model.
 
+  // Install wrapper collider if requested (deferred from enableWrapperCollider)
+  // Must create the G4InuclCollider first if it doesn't exist
+  if ((useWrapperCollider_ || useKaonBiasing_) && !wrapperColliderInstalled_) {
+    // Force collider creation by calling base class with dummy data
+    // G4CascadeInterface creates collider lazily in ApplyYourself
+    if (!collider) {
+      ldmx_log(info) << "Creating G4InuclCollider for wrapper installation";
+      collider = new G4InuclCollider;
+    }
+
+    if (useKaonBiasing_) {
+      // Install kaon-biased collider
+      // Note: The collider uses internal CM energy range (defaults: 1.5-10 GeV)
+      // for kinematic reasons. The photon energy thresholds are checked
+      // per-cascade in ApplyYourself() to enable/disable biasing.
+      ldmx_log(info) << "Installing kaon-biased collider with factor "
+                     << kaonBiasFactor_;
+      auto* kaonCollider = new KaonBiasedElementaryCollider();
+      kaonCollider->setBiasFactor(kaonBiasFactor_);
+      kaonCollider->setMaxAttempts(kaonBiasMaxAttempts_);
+      // Don't enable yet - will be enabled per-cascade based on photon energy
+      kaonCollider->setBiasEnabled(false);
+      setElementaryParticleCollider(kaonCollider);
+      kaonBiasColliderInstalled_ = true;
+    } else {
+      // Install standard wrapper collider
+      ldmx_log(info) << "Installing wrapper collider";
+      auto* wrapperCollider = new LDMXElementaryParticleCollider();
+      setElementaryParticleCollider(wrapperCollider);
+    }
+    wrapperColliderInstalled_ = true;
+  }
+
+  // Clear collision info before cascade (if wrapper collider is installed)
+  LDMXElementaryParticleCollider* wrapperCollider = getWrapperCollider();
+  if (wrapperCollider) {
+    wrapperCollider->clearCollisionInfo();
+  }
+
+  // Clear cumulative bias weight and conditionally enable/disable kaon biasing
+  // based on photon energy
+  KaonBiasedElementaryCollider* kaonCollider = getKaonBiasedCollider();
+  if (kaonCollider) {
+    kaonCollider->clearCumulativeBiasWeight();
+
+    // Enable/disable biasing based on photon energy range
+    bool inBiasRange = (photonEnergy >= kaonBiasMinPhotonEnergy_ &&
+                        photonEnergy <= kaonBiasMaxPhotonEnergy_);
+    kaonCollider->setBiasEnabled(inBiasRange);
+
+    if (inBiasRange) {
+      ldmx_log(debug) << "  Kaon biasing ENABLED for this cascade (E="
+                      << photonEnergy << " MeV)";
+    } else {
+      ldmx_log(debug) << "  Kaon biasing DISABLED for this cascade (E="
+                      << photonEnergy << " MeV outside range ["
+                      << kaonBiasMinPhotonEnergy_ << ", "
+                      << kaonBiasMaxPhotonEnergy_ << "])";
+    }
+  }
+
   // Call base class to perform the actual cascade
   G4HadFinalState* result =
       G4CascadeInterface::ApplyYourself(projectile, targetNucleus);
@@ -268,6 +337,12 @@ G4HadFinalState* LDMXCascadeInterface::ApplyYourself(
 
     ldmx_log(debug) << "  Total steps after de-excitation: "
                     << lastHistory_.getSteps().size();
+
+    // Enrich steps with collision info if wrapper collider is active
+    enrichWithCollisionInfo();
+
+    // Propagate bias weight to event if kaon biasing is enabled
+    propagateBiasWeightToEvent();
 
     // Store in the global history store for later retrieval
     if (!lastHistory_.empty()) {
@@ -651,6 +726,214 @@ void LDMXCascadeInterface::captureDeexcitationProducts(
                   << ", protons=" << n_deexcitation_protons
                   << ", alphas=" << n_deexcitation_alphas
                   << ", other=" << n_deexcitation_other;
+}
+
+void LDMXCascadeInterface::setElementaryParticleCollider(
+    G4ElementaryParticleCollider* newCollider) {
+  // Access the internal cascader via hack
+  // collider is G4InuclCollider* (from G4CascadeInterface)
+  // collider->theIntraNucleiCascader is G4IntraNucleiCascader*
+  if (!collider) {
+    ldmx_log(warn) << "Cannot set collider: G4InuclCollider not yet created";
+    return;
+  }
+
+  // Access the cascader through the hack
+  G4IntraNucleiCascader* cascader = collider->theIntraNucleiCascader;
+  if (!cascader) {
+    ldmx_log(warn) << "Cannot set collider: G4IntraNucleiCascader not yet created";
+    return;
+  }
+
+  // Try to cast to our LDMX cascader which has the setter
+  auto* ldmxCascader = dynamic_cast<LDMXIntraNucleiCascader*>(cascader);
+  if (ldmxCascader) {
+    ldmxCascader->setElementaryParticleCollider(newCollider);
+    ldmx_log(info) << "Elementary particle collider replaced via LDMXIntraNucleiCascader";
+  } else {
+    // If it's the base G4IntraNucleiCascader, we can still replace via hack
+    // Delete the old collider and set the new one
+    if (cascader->theElementaryParticleCollider) {
+      delete cascader->theElementaryParticleCollider;
+    }
+    cascader->theElementaryParticleCollider = newCollider;
+    ldmx_log(info) << "Elementary particle collider replaced via hack";
+  }
+}
+
+void LDMXCascadeInterface::enableWrapperCollider() {
+  // Just set the flag - actual installation is deferred to ApplyYourself()
+  // because G4InuclCollider is created lazily on first use
+  useWrapperCollider_ = true;
+  ldmx_log(info) << "Wrapper collider enabled (will install on first cascade)";
+}
+
+LDMXIntraNucleiCascader* LDMXCascadeInterface::getLDMXCascader() {
+  if (!collider) {
+    return nullptr;
+  }
+
+  G4IntraNucleiCascader* cascader = collider->theIntraNucleiCascader;
+  return dynamic_cast<LDMXIntraNucleiCascader*>(cascader);
+}
+
+LDMXElementaryParticleCollider* LDMXCascadeInterface::getWrapperCollider() {
+  if (!collider) {
+    return nullptr;
+  }
+
+  G4IntraNucleiCascader* cascader = collider->theIntraNucleiCascader;
+  if (!cascader) {
+    return nullptr;
+  }
+
+  // The elementary particle collider is accessible via hack
+  return dynamic_cast<LDMXElementaryParticleCollider*>(
+      cascader->theElementaryParticleCollider);
+}
+
+void LDMXCascadeInterface::enrichWithCollisionInfo() {
+  // Get wrapper collider with collision info
+  LDMXElementaryParticleCollider* wrapperCollider = getWrapperCollider();
+  if (!wrapperCollider) {
+    return;  // No wrapper collider, nothing to do
+  }
+
+  const auto& collisionInfos = wrapperCollider->getCollisionInfo();
+  if (collisionInfos.empty()) {
+    return;  // No collision info recorded
+  }
+
+  ldmx_log(debug) << "Enriching " << lastHistory_.getSteps().size()
+                  << " steps with " << collisionInfos.size() << " collision infos";
+
+  // Match collision info to steps by bullet PDG and momentum
+  // Cascade history momenta are in MeV, collision info is in GeV
+  const double momTolerance = 0.001;  // 1 MeV tolerance (in GeV)
+
+  // Track which collision infos have been matched
+  std::vector<bool> matched(collisionInfos.size(), false);
+
+  // Get mutable access to steps
+  auto& steps = lastHistory_.getSteps();
+
+  for (auto& step : steps) {
+    // Only enrich steps that interacted (had a collision)
+    if (!step.didInteract()) {
+      continue;
+    }
+
+    // Convert step momentum to GeV for comparison
+    double stepPx = step.getPx() / 1000.0;  // MeV -> GeV
+    double stepPy = step.getPy() / 1000.0;
+    double stepPz = step.getPz() / 1000.0;
+    double stepE = step.getEnergy() / 1000.0;
+    int stepPdg = step.getPdgId();
+
+    // Find best matching collision info
+    int bestMatch = -1;
+    double bestDist = 1e9;
+
+    for (size_t i = 0; i < collisionInfos.size(); ++i) {
+      if (matched[i]) continue;  // Already used
+
+      const auto& info = collisionInfos[i];
+
+      // Check PDG match
+      if (info.bulletPdg != stepPdg) continue;
+
+      // Calculate momentum distance
+      double dx = info.bulletPx - stepPx;
+      double dy = info.bulletPy - stepPy;
+      double dz = info.bulletPz - stepPz;
+      double de = info.bulletE - stepE;
+      double dist = std::sqrt(dx * dx + dy * dy + dz * dz + de * de);
+
+      if (dist < bestDist && dist < momTolerance) {
+        bestDist = dist;
+        bestMatch = static_cast<int>(i);
+      }
+    }
+
+    // If we found a match, enrich the step
+    if (bestMatch >= 0) {
+      const auto& info = collisionInfos[bestMatch];
+      step.setSqrtS(info.sqrtS);
+      step.setTargetPdgDirect(info.targetPdg);
+      step.setNucleusAtCollision(info.nucleusA, info.nucleusZ);
+      step.setKinEnergyLab(info.kinEnergyLab);
+      step.setCollisionSucceeded(info.succeeded);
+      step.setBiasWeight(info.biasWeight);  // Set bias weight from collision
+      matched[bestMatch] = true;
+
+      ldmx_log(trace) << "  Matched step " << step.getHistoryId()
+                      << " (PDG=" << stepPdg << ") to collision with sqrtS="
+                      << info.sqrtS << " GeV, target=" << info.targetPdg
+                      << ", biasWeight=" << info.biasWeight;
+    }
+  }
+
+  // Count matches
+  int numMatched = 0;
+  for (bool m : matched) {
+    if (m) numMatched++;
+  }
+  ldmx_log(debug) << "  Matched " << numMatched << " of " << collisionInfos.size()
+                  << " collision infos to steps";
+}
+
+KaonBiasedElementaryCollider* LDMXCascadeInterface::getKaonBiasedCollider() {
+  if (!collider) {
+    return nullptr;
+  }
+
+  G4IntraNucleiCascader* cascader = collider->theIntraNucleiCascader;
+  if (!cascader) {
+    return nullptr;
+  }
+
+  // The elementary particle collider is accessible via hack
+  return dynamic_cast<KaonBiasedElementaryCollider*>(
+      cascader->theElementaryParticleCollider);
+}
+
+void LDMXCascadeInterface::enableKaonBiasing(double biasFactor) {
+  useKaonBiasing_ = true;
+  kaonBiasFactor_ = biasFactor;
+  ldmx_log(info) << "Kaon biasing enabled with factor " << biasFactor
+                 << " (will install on first cascade)";
+}
+
+void LDMXCascadeInterface::propagateBiasWeightToEvent() {
+  // Get the kaon-biased collider to retrieve cumulative bias weight
+  KaonBiasedElementaryCollider* kaonCollider = getKaonBiasedCollider();
+  if (!kaonCollider) {
+    return;  // No kaon biasing active
+  }
+
+  double biasWeight = kaonCollider->getCumulativeBiasWeight();
+  if (std::abs(biasWeight - 1.0) < 1e-9) {
+    return;  // No bias was applied (weight is 1.0)
+  }
+
+  // Get UserEventInformation and multiply in the bias weight
+  G4Event* event = G4EventManager::GetEventManager()->GetNonconstCurrentEvent();
+  if (!event) {
+    ldmx_log(warn) << "Cannot propagate bias weight: no current event";
+    return;
+  }
+
+  auto* eventInfo =
+      static_cast<UserEventInformation*>(event->GetUserInformation());
+  if (!eventInfo) {
+    ldmx_log(warn) << "Cannot propagate bias weight: no UserEventInformation";
+    return;
+  }
+
+  // Multiply bias weight into event weight
+  eventInfo->incWeight(biasWeight);
+  ldmx_log(debug) << "Propagated kaon bias weight " << biasWeight
+                  << " to event (new weight: " << eventInfo->getWeight() << ")";
 }
 
 }  // namespace bertini

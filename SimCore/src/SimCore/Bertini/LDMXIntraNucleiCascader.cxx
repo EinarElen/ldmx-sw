@@ -11,9 +11,35 @@ namespace simcore {
 namespace bertini {
 
 LDMXIntraNucleiCascader::LDMXIntraNucleiCascader()
-    : G4IntraNucleiCascader(), recordHistory_{true}, incidentTrackId_{-1} {}
+    : G4IntraNucleiCascader(),
+      recordHistory_{true},
+      incidentTrackId_{-1},
+      ownsCollider_{false} {}
 
-LDMXIntraNucleiCascader::~LDMXIntraNucleiCascader() = default;
+LDMXIntraNucleiCascader::~LDMXIntraNucleiCascader() {
+  // Note: The base class destructor will delete theElementaryParticleCollider.
+  // If we replaced it via setElementaryParticleCollider(), we already deleted
+  // the original, and the base class will delete our replacement.
+  // This is correct behavior - no double-delete occurs.
+}
+
+void LDMXIntraNucleiCascader::setElementaryParticleCollider(
+    G4ElementaryParticleCollider* collider) {
+  if (!collider) {
+    // Ignore null collider
+    return;
+  }
+
+  // Delete the existing collider before replacing.
+  // The base class destructor will delete theElementaryParticleCollider,
+  // so we need to delete the original before replacing it.
+  if (theElementaryParticleCollider) {
+    delete theElementaryParticleCollider;
+  }
+
+  theElementaryParticleCollider = collider;
+  ownsCollider_ = true;
+}
 
 void LDMXIntraNucleiCascader::collide(G4InuclParticle* bullet,
                                       G4InuclParticle* target,

@@ -236,3 +236,31 @@ class BertiniWithHistoryModel(simcfg.PhotoNuclearModel):
         # Minimum photon energy to record history [MeV]
         # Default matches ECal PN bias threshold (0.625 * 8 GeV = 5 GeV)
         self.energy_threshold = 5000.0
+        # Whether to use the LDMX wrapper collider with logging
+        # When enabled, replaces G4ElementaryParticleCollider with
+        # LDMXElementaryParticleCollider which logs collision details.
+        # Useful for debugging and studying collision kinematics.
+        self.use_wrapper_collider = False
+
+        # --- Kaon biasing parameters ---
+        # Enables rejection sampling to enhance kaon production in cascade
+        # collisions. Non-kaon-producing collisions may be rejected and
+        # regenerated, with appropriate weights recorded for normalization.
+        self.use_kaon_biasing = False
+
+        # Enhancement factor for kaon production. Values > 1 enhance kaons.
+        # Example: factor = 10 means non-kaon events accepted with prob 1/10.
+        self.kaon_bias_factor = 1.0
+
+        # Minimum photon energy for kaon biasing [MeV]. Biasing is only
+        # applied for photonuclear interactions with photon energy above
+        # this threshold. Default: 2000 MeV (2 GeV, near kaon threshold).
+        self.kaon_bias_threshold = 2000.0
+
+        # Maximum photon energy for kaon biasing [MeV]. Above this energy,
+        # biasing is not applied. Default: 10000 MeV (10 GeV).
+        self.kaon_bias_max_energy = 10000.0
+
+        # Maximum regeneration attempts for rejection sampling. If exceeded,
+        # the last collision result is accepted with appropriate weight.
+        self.kaon_bias_max_attempts = 100

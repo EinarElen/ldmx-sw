@@ -27,6 +27,15 @@ void CascadeStep::clear() {
   targetPdgId_ = 0;
   interacted_ = false;
   escaped_ = false;
+  stage_ = CascadeStage::UNKNOWN;
+  // Collision info from wrapper collider
+  sqrtS_ = 0;
+  targetPdgDirect_ = 0;
+  nucleusA_ = 0;
+  nucleusZ_ = 0;
+  kinEnergyLab_ = 0;
+  collisionSucceeded_ = true;
+  biasWeight_ = 1.0;
 }
 
 double CascadeStep::getKineticEnergy() const {

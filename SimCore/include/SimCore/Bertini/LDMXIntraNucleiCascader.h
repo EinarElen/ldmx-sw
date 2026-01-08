@@ -71,6 +71,23 @@ class LDMXIntraNucleiCascader : public G4IntraNucleiCascader {
    */
   void setIncidentTrackId(int trackId) { incident_track_id_ = trackId; }
 
+  /**
+   * Replace the elementary particle collider with a custom one
+   * @param collider The new collider (this class takes ownership)
+   *
+   * NOTE: The base class destructor will delete theElementaryParticleCollider,
+   * so we delete the original before replacing and let the base handle cleanup.
+   */
+  void setElementaryParticleCollider(G4ElementaryParticleCollider* collider);
+
+  /**
+   * Get the current elementary particle collider
+   * Returns the internal collider pointer (accessible via hack header)
+   */
+  G4ElementaryParticleCollider* getElementaryParticleCollider() {
+    return theElementaryParticleCollider;
+  }
+
  private:
   /**
    * Convert G4CascadeHistory to ldmx::CascadeHistory
@@ -98,6 +115,9 @@ class LDMXIntraNucleiCascader : public G4IntraNucleiCascader {
 
   /** Captured history from last cascade */
   ldmx::CascadeHistory last_history_;
+
+  /** Whether we own the collider (true if replaced via setter) */
+  bool ownsCollider_{false};
 };
 
 }  // namespace bertini

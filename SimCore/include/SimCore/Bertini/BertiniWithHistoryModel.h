@@ -70,6 +70,55 @@ class BertiniWithHistoryModel : public PhotoNuclearModel {
    */
   double energy_threshold_{5000.0};
 
+  /**
+   * Whether to use the LDMX wrapper collider with logging
+   * When enabled, replaces the G4ElementaryParticleCollider with
+   * LDMXElementaryParticleCollider which logs collision details.
+   * Default: false (use standard Bertini collider)
+   */
+  bool useWrapperCollider_{false};
+
+  // --- Kaon biasing parameters ---
+
+  /**
+   * Whether to enable kaon production biasing via rejection sampling.
+   * When enabled, non-kaon-producing collisions may be rejected and
+   * regenerated, effectively enhancing kaon production.
+   * Default: false
+   */
+  bool useKaonBiasing_{false};
+
+  /**
+   * Kaon bias enhancement factor.
+   * Values > 1 enhance kaon production.
+   * Example: factor = 10 means non-kaon events accepted with probability 1/10.
+   * Default: 1.0 (no bias)
+   */
+  double kaonBiasFactor_{1.0};
+
+  /**
+   * Minimum projectile (photon) energy for kaon biasing [MeV].
+   * Kaon biasing is only applied for photonuclear interactions
+   * initiated by photons with energy above this threshold.
+   * Default: 2000 MeV (2 GeV, near kaon production threshold)
+   */
+  double kaonBiasThreshold_{2000.0};
+
+  /**
+   * Maximum projectile (photon) energy for kaon biasing [MeV].
+   * Above this energy, biasing may not be needed (kaons produced naturally).
+   * Set to a very high value to effectively disable upper limit.
+   * Default: 10000 MeV (10 GeV)
+   */
+  double kaonBiasMaxPhotonEnergy_{10000.0};
+
+  /**
+   * Maximum regeneration attempts for rejection sampling.
+   * If exceeded, accept the last collision with appropriate weight.
+   * Default: 100
+   */
+  int kaonBiasMaxAttempts_{100};
+
   enableLogging("BertiniWithHistoryModel")
 };
 

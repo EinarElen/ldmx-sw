@@ -17,9 +17,15 @@
 class G4HadProjectile;
 class G4Nucleus;
 class G4HadFinalState;
+class G4ElementaryParticleCollider;
 
 namespace simcore {
 namespace bertini {
+
+// Forward declarations
+class LDMXIntraNucleiCascader;
+class LDMXElementaryParticleCollider;
+class KaonBiasedElementaryCollider;
 
 /**
  * @class LDMXCascadeInterface
@@ -91,6 +97,69 @@ class LDMXCascadeInterface : public G4CascadeInterface {
    */
   void setIncidentTrackId(int trackId) { incident_track_id_ = trackId; }
 
+  /**
+   * Replace the elementary particle collider in the cascader
+   * @param collider The new collider (cascader takes ownership)
+   */
+  void setElementaryParticleCollider(G4ElementaryParticleCollider* collider);
+
+  /**
+   * Enable the LDMX wrapper collider with logging
+   * This replaces the default Bertini collider with LDMXElementaryParticleCollider
+   */
+  void enableWrapperCollider();
+
+  /**
+   * Get the internal LDMX cascader (for direct access)
+   * Returns nullptr if the cascader is not an LDMXIntraNucleiCascader
+   */
+  LDMXIntraNucleiCascader* getLDMXCascader();
+
+  /**
+   * Get the wrapper collider (for accessing collision info)
+   * Returns nullptr if wrapper collider is not installed
+   */
+  LDMXElementaryParticleCollider* getWrapperCollider();
+
+  /**
+   * Get the kaon-biased collider (for accessing bias info)
+   * Returns nullptr if kaon biasing is not enabled
+   */
+  KaonBiasedElementaryCollider* getKaonBiasedCollider();
+
+  // --- Kaon biasing configuration ---
+
+  /**
+   * Enable kaon biasing with rejection sampling.
+   * This replaces the wrapper collider with a kaon-biased version.
+   * @param biasFactor Enhancement factor for kaon production (>1 enhances kaons)
+   */
+  void enableKaonBiasing(double biasFactor);
+
+  /**
+   * Set kaon bias photon energy range [MeV].
+   * Biasing only applied for photons within this energy range.
+   */
+  void setKaonBiasPhotonEnergyRange(double minE, double maxE) {
+    kaonBiasMinPhotonEnergy_ = minE;
+    kaonBiasMaxPhotonEnergy_ = maxE;
+  }
+
+  /**
+   * Set maximum regeneration attempts for kaon biasing.
+   */
+  void setKaonBiasMaxAttempts(int max) { kaonBiasMaxAttempts_ = max; }
+
+  /**
+   * Check if kaon biasing is enabled.
+   */
+  bool isKaonBiasingEnabled() const { return useKaonBiasing_; }
+
+  /**
+   * Get the kaon bias factor.
+   */
+  double getKaonBiasFactor() const { return kaonBiasFactor_; }
+
  private:
   /**
    * Ensure the G4CascadeHistory object exists in the cascader
@@ -120,6 +189,21 @@ class LDMXCascadeInterface : public G4CascadeInterface {
    */
   void captureDeexcitationProducts(G4HadFinalState* finalState);
 
+  /**
+   * Enrich cascade history steps with collision info from wrapper collider
+   *
+   * This matches recorded collision info (sqrt(s), target nucleon, nucleus
+   * state) to cascade history steps based on bullet PDG and momentum.
+   * Only effective if wrapper collider is installed.
+   */
+  void enrichWithCollisionInfo();
+
+  /**
+   * Propagate the cumulative bias weight from the collider to the event.
+   * This multiplies the bias weight into UserEventInformation.
+   */
+  void propagateBiasWeightToEvent();
+
   /** Whether to record cascade history */
   bool record_history_{true};
 
@@ -131,6 +215,32 @@ class LDMXCascadeInterface : public G4CascadeInterface {
 
   /** Captured history from last cascade */
   ldmx::CascadeHistory last_history_;
+
+  /** Whether to use the wrapper collider (deferred until first ApplyYourself) */
+  bool useWrapperCollider_{false};
+
+  /** Whether we've already installed the wrapper collider */
+  bool wrapperColliderInstalled_{false};
+
+  // --- Kaon biasing configuration ---
+
+  /** Whether to use kaon biasing */
+  bool useKaonBiasing_{false};
+
+  /** Kaon bias enhancement factor */
+  double kaonBiasFactor_{1.0};
+
+  /** Minimum photon energy for kaon biasing [MeV] */
+  double kaonBiasMinPhotonEnergy_{2000.0};
+
+  /** Maximum photon energy for kaon biasing [MeV] */
+  double kaonBiasMaxPhotonEnergy_{10000.0};
+
+  /** Maximum regeneration attempts for kaon biasing */
+  int kaonBiasMaxAttempts_{100};
+
+  /** Whether kaon-biased collider has been installed */
+  bool kaonBiasColliderInstalled_{false};
 
   enableLogging("LDMXCascadeInterface")
 };
