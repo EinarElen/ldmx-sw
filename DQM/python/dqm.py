@@ -1111,6 +1111,414 @@ sample_validation_dqm = [
         SampleValidation()
         ]
         
+class CascadeHistoryDQM(ldmxcfg.Analyzer):
+    """Configured CascadeHistoryDQM python object
+
+    Contains an instance of CascadeHistoryDQM that
+    has already been configured.
+
+    Analyzes the Bertini intranuclear cascade history captured
+    when using the BertiniWithHistoryModel for photonuclear interactions.
+
+    Builds the necessary histograms as well.
+
+    Examples
+    --------
+        from LDMX.DQM import dqm
+        p.sequence.append( dqm.CascadeHistoryDQM() )
+    """
+
+    def __init__(self, name='CascadeHistoryDQM'):
+        super().__init__(name, 'dqm::CascadeHistoryDQM', 'DQM')
+
+        self.cascade_coll_name = 'PhotonuclearCascadeHistories'
+        self.cascade_pass_name = ''
+
+        # Thresholds for high-energy and leading neutron classification
+        # Leading neutron: energy fraction > threshold (default 50%)
+        self.leading_neutron_threshold = 0.5
+        # High-energy neutron: absolute KE threshold in MeV (default 1 GeV)
+        self.high_energy_neutron_threshold = 1000.0
+
+        # Particle category labels for histograms
+        particle_categories = ['p', 'n', '#pi^{+}', '#pi^{-}', '#pi^{0}', 'K', 'other']
+
+        # Number of cascades per event
+        self.build1DHistogram('n_cascades', 'Number of PN cascades per event', 20, 0, 20)
+
+        # Per-cascade histograms
+        self.build1DHistogram('cascade_n_steps', 'Number of cascade steps', 100, 0, 100)
+        self.build1DHistogram('cascade_target_A', 'Target nucleus A', 250, 0, 250)
+        self.build1DHistogram('cascade_target_Z', 'Target nucleus Z', 100, 0, 100)
+        self.build1DHistogram('incident_photon_energy', 'Incident photon energy [MeV]', 100, 0, 10000)
+        self.build1DHistogram('cascade_n_protons', 'Number of protons in cascade', 50, 0, 50)
+        self.build1DHistogram('cascade_n_neutrons', 'Number of neutrons in cascade', 50, 0, 50)
+        self.build1DHistogram('cascade_n_pions', 'Number of pions in cascade', 30, 0, 30)
+        self.build1DHistogram('cascade_n_kaons', 'Number of kaons in cascade', 20, 0, 20)
+        self.build1DHistogram('cascade_n_other', 'Number of other particles in cascade', 20, 0, 20)
+        self.build1DHistogram('cascade_n_interacted', 'Number of particles that interacted', 50, 0, 50)
+        self.build1DHistogram('cascade_n_escaped', 'Number of particles that escaped', 50, 0, 50)
+        self.build1DHistogram('cascade_max_generation', 'Maximum cascade generation', 30, 0, 30)
+        self.build1DHistogram('cascade_total_energy', 'Total energy in cascade [MeV]', 100, 0, 10000)
+        self.build1DHistogram('cascade_max_step_energy', 'Maximum step energy [MeV]', 100, 0, 5000)
+        self.build1DHistogram('cascade_interact_fraction', 'Fraction of particles that interacted', 50, 0, 1)
+        self.build1DHistogram('cascade_escape_fraction', 'Fraction of particles that escaped', 50, 0, 1)
+        self.build1DHistogram('cascade_nucleon_fraction', 'Fraction of particles that are nucleons', 50, 0, 1)
+
+        # Per-step histograms
+        self.build1DHistogram('step_pdg_category', 'Particle type category', particle_categories)
+        self.build1DHistogram('step_generation', 'Cascade generation', 20, 0, 20)
+        self.build1DHistogram('step_zone', 'Nuclear zone', 10, 0, 10)
+        self.build1DHistogram('step_energy', 'Step energy [MeV]', 100, 0, 5000)
+        self.build1DHistogram('step_ke', 'Step kinetic energy [MeV]', 100, 0, 5000)
+        self.build1DHistogram('step_radius', 'Radius within nucleus [fm]', 100, 0, 20)
+        self.build1DHistogram('step_x', 'X position within nucleus [fm]', 100, -20, 20)
+        self.build1DHistogram('step_y', 'Y position within nucleus [fm]', 100, -20, 20)
+        self.build1DHistogram('step_z', 'Z position within nucleus [fm]', 100, -20, 20)
+        self.build1DHistogram('step_n_daughters', 'Number of daughters', 20, 0, 20)
+
+        # Interaction/escape distributions
+        self.build1DHistogram('interacted_pdg_category', 'Particle type that interacted', particle_categories)
+        self.build1DHistogram('interacted_generation', 'Generation of particles that interacted', 20, 0, 20)
+        self.build1DHistogram('escaped_pdg_category', 'Particle type that escaped', particle_categories)
+        self.build1DHistogram('escaped_ke', 'Kinetic energy of escaped particles [MeV]', 100, 0, 5000)
+
+        # 2D histograms
+        self.build2DHistogram('generation_vs_radius',
+                              'Cascade generation', 20, 0, 20,
+                              'Radius [fm]', 50, 0, 20)
+        self.build2DHistogram('ke_vs_generation',
+                              'Kinetic energy [MeV]', 100, 0, 5000,
+                              'Cascade generation', 20, 0, 20)
+
+        # Primary reaction analysis histograms
+        # Reaction type classification
+        reaction_types = ['Quasi-elastic', '1#pi', '2#pi', 'Multi-#pi',
+                          'Kaon prod.', 'Multi-N', 'Complex']
+        # Target can be single nucleon (p, n) or quasi-deuteron (pp, pn, nn)
+        # Quasi-deuterons are virtual correlated nucleon pairs in the nucleus
+        target_types = ['Unknown', 'Proton', 'Neutron', 'pp (QD)', 'pn (QD)', 'nn (QD)']
+
+        self.build1DHistogram('primary_reaction_type', 'Primary reaction type', reaction_types)
+        self.build1DHistogram('primary_pdg', 'Primary particle type', particle_categories)
+        self.build1DHistogram('primary_energy', 'Primary particle energy [MeV]', 100, 0, 10000)
+        self.build1DHistogram('primary_ke', 'Primary particle kinetic energy [MeV]', 100, 0, 10000)
+        self.build1DHistogram('primary_target', 'Target nucleon type', target_types)
+
+        # Primary reaction products
+        self.build1DHistogram('primary_n_daughters', 'Number of primary reaction products', 20, 0, 20)
+        self.build1DHistogram('primary_n_protons', 'Number of protons from primary', 10, 0, 10)
+        self.build1DHistogram('primary_n_neutrons', 'Number of neutrons from primary', 10, 0, 10)
+        self.build1DHistogram('primary_n_piplus', 'Number of #pi^{+} from primary', 10, 0, 10)
+        self.build1DHistogram('primary_n_piminus', 'Number of #pi^{-} from primary', 10, 0, 10)
+        self.build1DHistogram('primary_n_pizero', 'Number of #pi^{0} from primary', 10, 0, 10)
+        self.build1DHistogram('primary_n_pions', 'Number of pions from primary', 15, 0, 15)
+        self.build1DHistogram('primary_n_kaons', 'Number of kaons from primary', 5, 0, 5)
+        self.build1DHistogram('primary_n_other', 'Number of other particles from primary', 10, 0, 10)
+
+        # Primary daughter kinematics
+        self.build1DHistogram('primary_daughter_pdg', 'Primary daughter particle type', particle_categories)
+        self.build1DHistogram('primary_daughter_ke', 'Primary daughter KE [MeV]', 100, 0, 5000)
+        self.build1DHistogram('primary_total_daughter_ke', 'Total KE of primary daughters [MeV]', 100, 0, 10000)
+        self.build1DHistogram('primary_max_daughter_ke', 'Maximum daughter KE [MeV]', 100, 0, 5000)
+        self.build1DHistogram('primary_energy_transfer_frac', 'Energy transfer fraction', 50, 0, 2)
+
+        # 2D: reaction type vs energy
+        self.build2DHistogram('primary_reaction_vs_energy',
+                              'Reaction type', 7, 0, 7,
+                              'Primary KE [MeV]', 100, 0, 10000)
+
+        # ================================================================
+        # Kaon production histograms
+        # ================================================================
+        # Kaon types: K+ (321), K- (-321), K0 (311), K0bar (-311), K0S (310), K0L (130)
+        # Note: Bertini internally uses both K0/K0bar and K0S/K0L states
+        kaon_types = ['K^{+}', 'K^{-}', 'K^{0}', '#bar{K}^{0}', 'K_{S}^{0}', 'K_{L}^{0}']
+
+        # Per-cascade kaon counts
+        self.build1DHistogram('n_kaons_total', 'Total kaons in cascade', 10, 0, 10)
+        self.build1DHistogram('n_kaons_escaped', 'Number of escaped kaons', 10, 0, 10)
+        self.build1DHistogram('n_kaon_plus', 'Number of K^{+} in cascade', 5, 0, 5)
+        self.build1DHistogram('n_kaon_minus', 'Number of K^{-} in cascade', 5, 0, 5)
+        self.build1DHistogram('n_kaon_zero', 'Number of K^{0}/#bar{K}^{0} in cascade', 5, 0, 5)
+        self.build1DHistogram('n_kaon_short', 'Number of K_{S}^{0} in cascade', 5, 0, 5)
+        self.build1DHistogram('n_kaon_long', 'Number of K_{L}^{0} in cascade', 5, 0, 5)
+        self.build1DHistogram('n_kaons_charged', 'Number of charged kaons (K^{#pm})', 10, 0, 10)
+        self.build1DHistogram('n_kaons_neutral', 'Number of neutral kaons', 10, 0, 10)
+        self.build1DHistogram('cascade_has_kaons', 'Cascade produced any kaons?', 2, 0, 2)
+
+        # Per-kaon properties
+        self.build1DHistogram('kaon_type', 'Kaon type', kaon_types)
+        self.build1DHistogram('kaon_generation', 'Kaon production generation', 20, 0, 20)
+        self.build1DHistogram('kaon_zone', 'Nuclear zone of kaon production', 10, 0, 10)
+        self.build1DHistogram('kaon_radius', 'Radius of kaon production [fm]', 100, 0, 20)
+        self.build1DHistogram('kaon_ke', 'Kaon kinetic energy [MeV]', 100, 0, 5000)
+        self.build1DHistogram('kaon_energy', 'Kaon total energy [MeV]', 100, 0, 5000)
+        self.build1DHistogram('kaon_energy_fraction', 'Kaon KE / incident photon energy', 100, 0, 1)
+
+        # Escaped kaons
+        self.build1DHistogram('kaon_escaped_type', 'Escaped kaon type', kaon_types)
+        self.build1DHistogram('kaon_escaped_ke', 'Escaped kaon KE [MeV]', 100, 0, 5000)
+        self.build1DHistogram('kaon_escaped_generation', 'Escaped kaon production generation', 20, 0, 20)
+
+        # Kaon production mechanism
+        self.build1DHistogram('kaon_parent_type', 'Parent particle type of kaon', particle_categories)
+        self.build1DHistogram('kaon_production_target', 'Target nucleon in kaon production', target_types)
+
+        # 2D kaon histograms
+        self.build2DHistogram('kaon_type_vs_energy_frac',
+                              'Kaon type', 6, 0, 6,
+                              'KE / incident energy', 50, 0, 1)
+        self.build2DHistogram('kaon_type_vs_parent',
+                              'Kaon type', 6, 0, 6,
+                              'Parent type', 7, 0, 7)
+        self.build2DHistogram('kaon_ke_vs_generation',
+                              'Kaon KE [MeV]', 100, 0, 5000,
+                              'Production generation', 20, 0, 20)
+
+        # ================================================================
+        # Neutron production histograms (especially high-energy neutrons)
+        # ================================================================
+        # Neutrons carrying significant energy fraction are key LDMX backgrounds
+
+        # Per-cascade neutron counts
+        self.build1DHistogram('n_neutrons_total', 'Total neutrons in cascade', 50, 0, 50)
+        self.build1DHistogram('n_neutrons_escaped', 'Number of escaped neutrons', 50, 0, 50)
+        self.build1DHistogram('n_leading_neutrons', 'Neutrons with E > 50% incident (leading)', 10, 0, 10)
+        self.build1DHistogram('n_high_energy_neutrons', 'Neutrons with KE > 1 GeV', 10, 0, 10)
+        self.build1DHistogram('cascade_has_leading_neutron', 'Cascade has leading neutron?', 2, 0, 2)
+        self.build1DHistogram('cascade_has_high_energy_neutron', 'Cascade has high-E neutron?', 2, 0, 2)
+
+        # Basic neutron properties
+        self.build1DHistogram('neutron_ke', 'Neutron kinetic energy [MeV]', 100, 0, 5000)
+        self.build1DHistogram('neutron_generation', 'Neutron production generation', 20, 0, 20)
+        self.build1DHistogram('neutron_zone', 'Nuclear zone of neutron', 10, 0, 10)
+        self.build1DHistogram('neutron_radius', 'Radius of neutron position [fm]', 100, 0, 20)
+        self.build1DHistogram('neutron_energy_fraction', 'Neutron KE / incident energy', 100, 0, 1)
+        self.build1DHistogram('neutron_escape_fraction', 'Fraction of neutrons that escaped', 50, 0, 1)
+
+        # Maximum energy neutron in cascade
+        self.build1DHistogram('max_neutron_ke', 'Maximum neutron KE in cascade [MeV]', 100, 0, 5000)
+        self.build1DHistogram('max_neutron_energy_frac', 'Max neutron KE / incident energy', 100, 0, 1)
+        self.build1DHistogram('max_neutron_generation', 'Generation of max-KE neutron', 20, 0, 20)
+
+        # Escaped neutrons
+        self.build1DHistogram('neutron_escaped_ke', 'Escaped neutron KE [MeV]', 100, 0, 5000)
+        self.build1DHistogram('neutron_escaped_generation', 'Escaped neutron generation', 20, 0, 20)
+        self.build1DHistogram('neutron_escaped_energy_frac', 'Escaped neutron energy fraction', 100, 0, 1)
+
+        # High-energy neutrons (absolute threshold: KE > 1 GeV default)
+        self.build1DHistogram('high_energy_neutron_ke', 'High-E neutron KE [MeV]', 100, 1000, 6000)
+        self.build1DHistogram('high_energy_neutron_generation', 'High-E neutron generation', 20, 0, 20)
+        self.build1DHistogram('high_energy_neutron_energy_frac', 'High-E neutron energy fraction', 100, 0, 1)
+        self.build1DHistogram('high_energy_neutron_parent', 'Parent of high-E neutron', particle_categories)
+        self.build1DHistogram('high_energy_neutron_escaped_ke', 'Escaped high-E neutron KE [MeV]', 100, 1000, 6000)
+
+        # Leading neutrons (relative threshold: KE > 50% of incident energy)
+        self.build1DHistogram('leading_neutron_ke', 'Leading neutron KE [MeV]', 100, 0, 6000)
+        self.build1DHistogram('leading_neutron_generation', 'Leading neutron generation', 20, 0, 20)
+        self.build1DHistogram('leading_neutron_energy_frac', 'Leading neutron energy fraction', 50, 0.5, 1)
+        self.build1DHistogram('leading_neutron_parent', 'Parent of leading neutron', particle_categories)
+        self.build1DHistogram('leading_neutron_target', 'Target nucleon for leading neutron prod.', target_types)
+        self.build1DHistogram('leading_neutron_escaped_ke', 'Escaped leading neutron KE [MeV]', 100, 0, 6000)
+        self.build1DHistogram('leading_neutron_escaped_energy_frac', 'Escaped leading neutron E frac', 50, 0.5, 1)
+
+        # 2D neutron histograms
+        self.build2DHistogram('neutron_ke_vs_generation',
+                              'Neutron KE [MeV]', 100, 0, 5000,
+                              'Production generation', 20, 0, 20)
+        self.build2DHistogram('neutron_energy_frac_vs_generation',
+                              'Neutron KE / incident energy', 100, 0, 1,
+                              'Production generation', 20, 0, 20)
+
+        # ================================================================
+        # Kinematic analysis histograms
+        # ================================================================
+        # Scattering angles and momentum components relative to beam axis (z)
+
+        # Per-step kinematics (all cascade particles)
+        self.build1DHistogram('step_pt', 'Transverse momentum p_{T} [MeV/c]', 100, 0, 3000)
+        self.build1DHistogram('step_pL', 'Longitudinal momentum p_{L} [MeV/c]', 200, -3000, 3000)
+        self.build1DHistogram('step_theta', 'Polar angle #theta [deg]', 180, 0, 180)
+        self.build1DHistogram('step_phi', 'Azimuthal angle #phi [deg]', 180, -180, 180)
+        self.build1DHistogram('step_eta', 'Pseudorapidity #eta', 100, -5, 5)
+        self.build1DHistogram('step_rapidity', 'Rapidity y', 100, -5, 5)
+        self.build1DHistogram('step_pt_over_e', 'p_{T}/E ratio', 100, 0, 1)
+        self.build1DHistogram('step_feynman_x', 'Feynman x_{F} = p_{L}/E_{inc}', 100, -1, 1)
+
+        # Particle-type-specific kinematics
+        self.build1DHistogram('proton_theta', 'Proton polar angle #theta [deg]', 180, 0, 180)
+        self.build1DHistogram('proton_pt', 'Proton p_{T} [MeV/c]', 100, 0, 2000)
+        self.build1DHistogram('neutron_theta', 'Neutron polar angle #theta [deg]', 180, 0, 180)
+        self.build1DHistogram('neutron_pt', 'Neutron p_{T} [MeV/c]', 100, 0, 2000)
+        self.build1DHistogram('pion_theta', 'Pion polar angle #theta [deg]', 180, 0, 180)
+        self.build1DHistogram('pion_pt', 'Pion p_{T} [MeV/c]', 100, 0, 2000)
+
+        # Escaped particle kinematics (particles leaving the nucleus)
+        self.build1DHistogram('escaped_theta', 'Escaped particle #theta [deg]', 180, 0, 180)
+        self.build1DHistogram('escaped_pt', 'Escaped particle p_{T} [MeV/c]', 100, 0, 3000)
+        self.build1DHistogram('escaped_eta', 'Escaped particle #eta', 100, -5, 5)
+        self.build1DHistogram('escaped_rapidity', 'Escaped particle rapidity', 100, -5, 5)
+        self.build1DHistogram('escaped_avg_pt', 'Average p_{T} of escaped particles [MeV/c]', 100, 0, 1000)
+        self.build1DHistogram('escaped_sum_pt', 'Sum p_{T} of escaped particles [MeV/c]', 100, 0, 5000)
+
+        # Escaped particle multiplicity
+        self.build1DHistogram('n_escaped_charged', 'Number of escaped charged particles', 30, 0, 30)
+        self.build1DHistogram('n_escaped_neutral', 'Number of escaped neutral particles', 30, 0, 30)
+
+        # Leading/sub-leading particle analysis (sorted by KE)
+        self.build1DHistogram('leading_escaped_ke', 'Leading escaped particle KE [MeV]', 100, 0, 5000)
+        self.build1DHistogram('leading_escaped_pdg', 'Leading escaped particle type', particle_categories)
+        self.build1DHistogram('leading_escaped_pt', 'Leading escaped particle p_{T} [MeV/c]', 100, 0, 2000)
+        self.build1DHistogram('leading_escaped_energy_frac', 'Leading escaped KE / incident E', 100, 0, 1)
+        self.build1DHistogram('subleading_escaped_ke', 'Sub-leading escaped particle KE [MeV]', 100, 0, 3000)
+        self.build1DHistogram('subleading_escaped_pdg', 'Sub-leading escaped particle type', particle_categories)
+        self.build1DHistogram('leading_subleading_asymmetry', '(E_{1}-E_{2})/(E_{1}+E_{2})', 100, 0, 1)
+
+        # Leading/sub-leading by pT
+        self.build1DHistogram('leading_escaped_pt_value', 'Leading escaped p_{T} [MeV/c]', 100, 0, 2000)
+        self.build1DHistogram('subleading_escaped_pt_value', 'Sub-leading escaped p_{T} [MeV/c]', 100, 0, 1500)
+
+        # 2D kinematic correlations
+        self.build2DHistogram('pt_vs_eta',
+                              'p_{T} [MeV/c]', 100, 0, 2000,
+                              '#eta', 50, -5, 5)
+        self.build2DHistogram('pt_vs_rapidity',
+                              'p_{T} [MeV/c]', 100, 0, 2000,
+                              'Rapidity y', 50, -5, 5)
+        self.build2DHistogram('theta_vs_ke',
+                              '#theta [deg]', 90, 0, 180,
+                              'KE [MeV]', 100, 0, 5000)
+        self.build2DHistogram('pt_vs_energy_frac',
+                              'p_{T} [MeV/c]', 100, 0, 2000,
+                              'KE/E_{inc}', 50, 0, 1)
+        self.build2DHistogram('theta_vs_energy_frac',
+                              '#theta [deg]', 90, 0, 180,
+                              'KE/E_{inc}', 50, 0, 1)
+        self.build2DHistogram('feynman_x_vs_pt',
+                              'Feynman x_{F}', 100, -1, 1,
+                              'p_{T} [MeV/c]', 100, 0, 2000)
+        self.build2DHistogram('escaped_pt_vs_theta',
+                              'p_{T} [MeV/c]', 100, 0, 2000,
+                              '#theta [deg]', 90, 0, 180)
+        self.build2DHistogram('escaped_pt_vs_ke',
+                              'p_{T} [MeV/c]', 100, 0, 2000,
+                              'KE [MeV]', 100, 0, 5000)
+
+        # Leading vs sub-leading correlations
+        self.build2DHistogram('leading_vs_subleading_ke',
+                              'Leading KE [MeV]', 100, 0, 5000,
+                              'Sub-leading KE [MeV]', 100, 0, 3000)
+        self.build2DHistogram('leading_vs_subleading_pt',
+                              'Leading p_{T} [MeV/c]', 100, 0, 2000,
+                              'Sub-leading p_{T} [MeV/c]', 100, 0, 1500)
+
+        # Multiplicity correlations
+        self.build2DHistogram('escaped_charged_vs_neutral',
+                              'N charged escaped', 20, 0, 20,
+                              'N neutral escaped', 20, 0, 20)
+        self.build2DHistogram('escaped_proton_vs_neutron',
+                              'N escaped protons', 15, 0, 15,
+                              'N escaped neutrons', 15, 0, 15)
+        self.build2DHistogram('escaped_pion_vs_nucleon',
+                              'N escaped pions', 10, 0, 10,
+                              'N escaped nucleons', 20, 0, 20)
+        self.build2DHistogram('n_escaped_vs_avg_pt',
+                              'N escaped particles', 30, 0, 30,
+                              'Average p_{T} [MeV/c]', 50, 0, 1000)
+
+        # ================================================================
+        # Cascade stage and energy balance histograms
+        # ================================================================
+        # Stage labels: 0=unknown, 1=incident, 2=primary, 3=cascade,
+        #               4=preequilibrium, 5=absorbed, 6=spectator, 7=deexcitation
+        stage_labels = ['Unknown', 'Incident', 'Primary', 'Cascade',
+                        'Pre-eq.', 'Absorbed', 'Spectator', 'De-exc.']
+
+        self.build1DHistogram('step_stage', 'Cascade stage', stage_labels)
+
+        # Stage-specific multiplicities
+        self.build1DHistogram('n_primary_products', 'N primary reaction products', 20, 0, 20)
+        self.build1DHistogram('n_cascade_products', 'N cascade scattering products', 50, 0, 50)
+        self.build1DHistogram('n_preequilibrium', 'N pre-equilibrium emissions', 20, 0, 20)
+        self.build1DHistogram('n_absorbed', 'N absorbed particles', 30, 0, 30)
+
+        # Stage-specific energies
+        self.build1DHistogram('primary_stage_ke', 'Primary product KE [MeV]', 100, 0, 5000)
+        self.build1DHistogram('primary_stage_escaped_ke', 'Escaped primary product KE [MeV]', 100, 0, 5000)
+        self.build1DHistogram('cascade_stage_ke', 'Cascade product KE [MeV]', 100, 0, 3000)
+        self.build1DHistogram('cascade_stage_escaped_ke', 'Escaped cascade product KE [MeV]', 100, 0, 3000)
+        self.build1DHistogram('preequilibrium_ke', 'Pre-equilibrium emission KE [MeV]', 100, 0, 3000)
+        self.build1DHistogram('preequilibrium_escaped_ke', 'Escaped pre-equilibrium KE [MeV]', 100, 0, 3000)
+        self.build1DHistogram('absorbed_ke', 'Absorbed particle KE [MeV]', 100, 0, 1000)
+
+        # Excitation energy
+        self.build1DHistogram('excitation_energy', 'Excitation energy [MeV]', 100, 0, 5000)
+        self.build1DHistogram('excitation_fraction', 'Excitation energy / incident energy', 100, 0, 1)
+
+        # Residual nucleus
+        self.build1DHistogram('residual_A', 'Residual nucleus A', 250, 0, 250)
+        self.build1DHistogram('residual_Z', 'Residual nucleus Z', 100, 0, 100)
+        self.build1DHistogram('n_knocked_out_nucleons', 'N knocked-out nucleons', 50, 0, 50)
+        self.build1DHistogram('n_knocked_out_protons', 'N knocked-out protons', 30, 0, 30)
+        self.build1DHistogram('n_knocked_out_neutrons', 'N knocked-out neutrons', 30, 0, 30)
+
+        # Energy balance
+        self.build1DHistogram('total_escaped_energy', 'Total escaped energy [MeV]', 100, 0, 10000)
+        self.build1DHistogram('escaped_energy_fraction', 'Escaped energy / incident energy', 100, 0, 1)
+        self.build1DHistogram('primary_energy_fraction', 'Primary escaped E / incident E', 100, 0, 1)
+        self.build1DHistogram('cascade_energy_fraction', 'Cascade escaped E / incident E', 100, 0, 1)
+        self.build1DHistogram('preequilibrium_energy_fraction', 'Pre-eq escaped E / incident E', 100, 0, 1)
+
+        # 2D energy balance correlations
+        self.build2DHistogram('excitation_vs_incident',
+                              'Excitation energy [MeV]', 100, 0, 5000,
+                              'Incident energy [MeV]', 100, 0, 10000)
+        self.build2DHistogram('excitation_vs_escaped',
+                              'Excitation energy [MeV]', 100, 0, 5000,
+                              'Total escaped energy [MeV]', 100, 0, 10000)
+        self.build2DHistogram('residual_A_vs_Z',
+                              'Residual A', 100, 0, 250,
+                              'Residual Z', 50, 0, 100)
+        self.build2DHistogram('excitation_vs_knocked_out',
+                              'Excitation energy [MeV]', 100, 0, 5000,
+                              'N knocked-out nucleons', 30, 0, 30)
+
+        # ================================================================
+        # De-excitation analysis histograms
+        # ================================================================
+        # De-excitation products: evaporation, gamma emission, fission fragments
+        # These are important for LDMX, especially low-energy neutrons
+
+        # De-excitation multiplicity
+        self.build1DHistogram('n_deexcitation', 'N de-excitation products', 30, 0, 30)
+        self.build1DHistogram('n_deexcitation_gammas', 'N de-excitation gammas', 20, 0, 20)
+        self.build1DHistogram('n_deexcitation_neutrons', 'N de-excitation neutrons', 20, 0, 20)
+        self.build1DHistogram('n_deexcitation_protons', 'N de-excitation protons', 10, 0, 10)
+        self.build1DHistogram('n_deexcitation_alphas', 'N de-excitation alphas', 10, 0, 10)
+
+        # De-excitation energies
+        self.build1DHistogram('deexcitation_ke', 'De-excitation product KE [MeV]', 100, 0, 500)
+        self.build1DHistogram('deexcitation_pdg', 'De-excitation particle type', particle_categories)
+        self.build1DHistogram('deexcitation_gamma_energy', 'De-excitation gamma energy [MeV]', 100, 0, 50)
+        self.build1DHistogram('deexcitation_neutron_ke', 'De-excitation neutron KE [MeV]', 100, 0, 100)
+        self.build1DHistogram('deexcitation_proton_ke', 'De-excitation proton KE [MeV]', 100, 0, 100)
+        self.build1DHistogram('deexcitation_alpha_ke', 'De-excitation alpha KE [MeV]', 100, 0, 100)
+        self.build1DHistogram('deexcitation_total_energy', 'Total de-excitation energy [MeV]', 100, 0, 500)
+
+        # Flag for multiple de-excitation neutrons (important background)
+        self.build1DHistogram('cascade_has_multi_deexcitation_neutrons',
+                              'Has >= 3 de-excitation neutrons?', 2, 0, 2)
+
+        # 2D de-excitation correlations
+        self.build2DHistogram('deexcitation_vs_excitation',
+                              'De-excitation energy [MeV]', 100, 0, 500,
+                              'Excitation energy [MeV]', 100, 0, 5000)
+        self.build2DHistogram('n_deexcitation_vs_excitation',
+                              'N de-excitation products', 20, 0, 20,
+                              'Excitation energy [MeV]', 100, 0, 5000)
+
+
 class EcalClusterAnalyzer(ldmxcfg.Analyzer) :
     """Analyze clustering"""
 

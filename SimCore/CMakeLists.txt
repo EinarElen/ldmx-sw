@@ -43,15 +43,35 @@ setup_library(module SimCore
               name PhotoNuclearModels
               dependencies SimCore::G4User)
 
+# Bertini cascade history capture library
+# Must come after PhotoNuclearModels as it depends on it
+setup_library(module SimCore
+              name Bertini
+              dependencies ROOT::Core
+                           Geant4::Interface
+                           SimCore::Event
+                           SimCore::G4User
+                           SimCore::PhotoNuclearModels
+                           Framework::Configure
+                           Framework::Framework
+              linkdef include/SimCore/Bertini/LinkDef.h)
+
+# Suppress warnings from the hack header
+# The #define private protected hack triggers -Wkeyword-macro
+target_compile_options(SimCore_Bertini PRIVATE -Wno-keyword-macro)
+
 
 # Primary Generators library needs G4User and LHE
+# Also includes Castalia for Pythia8/Angantyr integration
 setup_library(module SimCore
               name Generators
               dependencies SimCore::LHE
                            SimCore::G4User
-			                     SimCore::Event
+                           SimCore::Event
                            GENIE::GENIE
-                           HepMC3)
+                           HepMC3
+                           castalia
+                           Pythia8::Pythia8)
 			   
 # Reweight Library
 setup_library(module SimCore
@@ -82,6 +102,7 @@ setup_library(module SimCore
                            SimCore::G4User
                            SimCore::Geo
                            SimCore::PhotoNuclearModels
+                           SimCore::Bertini
                            SimCore::BiasOperators
                            SimCore::Generators
                            SimCore::Reweight

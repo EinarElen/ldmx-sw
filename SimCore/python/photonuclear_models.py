@@ -180,3 +180,59 @@ class NoPhotoNuclearModel(simcfg.PhotoNuclearModel):
         super().__init__('NoPhotoNuclearModel',
                          'simcore::NoPhotoNuclearModel',
                          'SimCore_PhotoNuclearModels')
+
+
+class BertiniWithHistoryModel(simcfg.PhotoNuclearModel):
+    """A photonuclear model that captures the internal Bertini cascade history.
+
+    This model uses the standard Bertini cascade from Geant4 but intercepts
+    the internal cascade history, recording all particles and their interactions
+    during the intranuclear cascade. The history is stored per-photonuclear-vertex
+    and can be retrieved from the event output as "PhotonuclearCascadeHistories".
+
+    The cascade history includes:
+    - All particles created during the cascade
+    - Parent-daughter relationships
+    - Particle momenta and positions within the nucleus
+    - Cascade generation and nuclear zone information
+    - Quasi-deuteron target types (pp, pn, nn) for the primary interaction
+
+    This is useful for:
+    - Studying the internal dynamics of photonuclear interactions
+    - Debugging cascade physics
+    - Validating against other cascade models
+
+    Note: Recording cascade history has some performance overhead. Set
+    record_history=False if you only need standard Bertini behavior.
+
+    Parameters:
+        max_energy : float
+            Maximum energy for the model [MeV]. Default: 15000 (15 GeV)
+        record_history : bool
+            Whether to record cascade history. Default: True
+        energy_threshold : float
+            Minimum photon energy to record history [MeV]. Only cascades
+            initiated by photons above this energy will be recorded.
+            Default: 5000 (5 GeV), matching the typical ECal PN bias threshold.
+
+    Example usage:
+        from LDMX.SimCore import photonuclear_models
+        sim.photonuclear_model = photonuclear_models.BertiniWithHistoryModel()
+
+        # Or with custom threshold:
+        model = photonuclear_models.BertiniWithHistoryModel()
+        model.energy_threshold = 2500.0  # 2.5 GeV threshold
+        sim.photonuclear_model = model
+    """
+
+    def __init__(self):
+        super().__init__('BertiniWithHistoryModel',
+                         'simcore::bertini::BertiniWithHistoryModel',
+                         'SimCore_Bertini')
+        # Maximum energy for the model [MeV] - default 15 GeV
+        self.max_energy = 15000.0
+        # Whether to record cascade history (can disable for performance)
+        self.record_history = True
+        # Minimum photon energy to record history [MeV]
+        # Default matches ECal PN bias threshold (0.625 * 8 GeV = 5 GeV)
+        self.energy_threshold = 5000.0

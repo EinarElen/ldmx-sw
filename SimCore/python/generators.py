@@ -419,7 +419,7 @@ def single_backwards_positron(energy: float):
     ----------
     energy: float
         energy in GeV of the positron
-    
+
     Returns
     -------
     gun:
@@ -431,4 +431,136 @@ def single_backwards_positron(energy: float):
     beam.direction = [0., 0., -1.]
     beam.energy = energy
     return beam
+
+
+class castalia(simcfg.PrimaryGenerator):
+    """Pythia8-based generator using Castalia for electron-proton collisions
+    with EPA and optional Hidden Valley dark photon production.
+
+    This generator uses Pythia8 with EPA (Equivalent Photon Approximation) for
+    electron-proton collisions. The electron radiates a quasi-real photon that
+    interacts with the proton target. It can also enable Hidden Valley dark
+    photon (A') production via kinetic mixing with the SM photon.
+
+    Parameters
+    ----------
+    name : str
+        Name of new primary generator instance
+
+    Attributes
+    ----------
+    beam_energy : float
+        Electron beam energy in GeV (default: 100.0)
+    vertex : list of float
+        Primary vertex position [x, y, z] in mm (default: [0, 0, 0])
+    enable_dark_photon : bool
+        Enable Hidden Valley dark photon production (default: False)
+    dark_photon_mass : float
+        Dark photon mass in GeV (default: 0.1)
+    kinetic_mixing : float
+        Kinetic mixing parameter epsilon (default: 1e-4)
+    pythia_commands : list of str
+        Additional Pythia8 configuration commands
+    verbosity : int
+        Verbosity level (default: 0)
+
+    Examples
+    --------
+    Basic electron-proton collision with EPA::
+
+        gen = castalia('ep_epa')
+        gen.beam_energy = 100.0
+        gen.vertex = [0., 0., 220.]  # ECal position
+
+    With dark photon production::
+
+        gen = castalia('dark_photon')
+        gen.beam_energy = 100.0
+        gen.enable_dark_photon = True
+        gen.dark_photon_mass = 0.05  # 50 MeV
+        gen.kinetic_mixing = 1e-4
+        gen.vertex = [0., 0., 220.]
+
+    With custom Pythia commands::
+
+        gen = castalia('custom')
+        gen.pythia_commands = [
+            'HiddenValley:ffbar2DvDvbar = on',
+            'HiddenValley:alphaFSR = 0.2'
+        ]
+    """
+
+    def __init__(self, name):
+        super().__init__(name, 'simcore::generators::CastaliaGenerator')
+
+        # Beam configuration (electron on proton with EPA)
+        self.beam_energy = 100.0  # GeV
+
+        # Vertex position (default at origin)
+        self.vertex = [0., 0., 0.]
+
+        # Hidden Valley / Dark Photon settings
+        self.enable_dark_photon = False
+        self.dark_photon_mass = 0.1    # GeV
+        self.kinetic_mixing = 1e-4     # epsilon
+
+        # Additional Pythia commands
+        self.pythia_commands = []
+
+        # Verbosity
+        self.verbosity = 0
+
+
+def ecal_electron_proton(beam_energy=100.0, vertex_z=220.0):
+    """Configure a Castalia generator for electron-proton collisions
+    with EPA in the ECal region.
+
+    Uses Pythia8 with EPA (Equivalent Photon Approximation) for e-p collisions.
+
+    Parameters
+    ----------
+    beam_energy : float
+        Electron beam energy in GeV (default: 100.0)
+    vertex_z : float
+        Z position of interaction vertex in mm (default: 220.0, ECal front)
+
+    Returns
+    -------
+    castalia
+        Configured generator instance
+    """
+    gen = castalia(f'ecal_ep_{beam_energy}GeV')
+    gen.beam_energy = beam_energy
+    gen.vertex = [0., 0., vertex_z]
+    return gen
+
+
+def dark_photon_ecal(beam_energy=100.0, aprime_mass=0.1, epsilon=1e-4,
+                     vertex_z=220.0):
+    """Configure a Castalia generator for dark photon (A') production
+    in electron-proton collisions via Hidden Valley kinetic mixing.
+
+    Parameters
+    ----------
+    beam_energy : float
+        Electron beam energy in GeV (default: 100.0)
+    aprime_mass : float
+        Dark photon mass in GeV (default: 0.1)
+    epsilon : float
+        Kinetic mixing parameter (default: 1e-4)
+    vertex_z : float
+        Z position of interaction vertex in mm (default: 220.0, ECal front)
+
+    Returns
+    -------
+    castalia
+        Configured generator instance with dark photon enabled
+    """
+    gen = castalia(f'dark_photon_{aprime_mass*1000:.0f}MeV')
+    gen.beam_energy = beam_energy
+    gen.vertex = [0., 0., vertex_z]
+    gen.enable_dark_photon = True
+    gen.dark_photon_mass = aprime_mass
+    gen.kinetic_mixing = epsilon
+    return gen
 
