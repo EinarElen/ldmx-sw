@@ -54,6 +54,9 @@ find_package(Geant4Interface)
 
 find_package(GENIE)
 
+# Pythia8 is required by Castalia
+find_package(Pythia8 REQUIRED)
+
 find_package(
   Boost REQUIRED
   COMPONENTS system
