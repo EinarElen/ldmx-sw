@@ -23,6 +23,7 @@ matplotlib.rcParams['font.family'] = 'DejaVu Sans'
 from ._differ import Differ
 from ._file import File
 from ._plotter import plotter
+from ._merger import merge_pdfs
 
 # guard incase someone imports this somehow
 if __name__ == '__main__' :
@@ -54,6 +55,14 @@ if __name__ == '__main__' :
     parser.add_argument('--input-files', nargs='+', type=str,
                         help="""Specify the name of the root files directly (either
                         full/relative path or name of files in the input data directory)""")
+    parser.add_argument('--merge-pdfs', action='store_true', default=True,
+                        dest='merge_pdfs',
+                        help='Merge all generated PDFs into a single multi-page document (default: enabled)')
+    parser.add_argument('--no-merge-pdfs', action='store_false',
+                        dest='merge_pdfs',
+                        help='Disable PDF merging')
+    parser.add_argument('--merged-pdf-name', type=str, default='all_plots.pdf',
+                        help='Name of the merged PDF file (default: all_plots.pdf)')
 
     arg = parser.parse_args()
 
@@ -118,3 +127,13 @@ if __name__ == '__main__' :
         plot(hd, out_dir = out_dir)
 
     print("Plots are created under the directory '" + out_dir + "'")
+
+    # Merge PDFs if enabled and output type is PDF
+    if arg.merge_pdfs and output_type == '.pdf':
+        merged_path = merge_pdfs(
+            out_dir,
+            output_name=arg.merged_pdf_name,
+            enabled=True
+        )
+        if merged_path:
+            print(f"Merged PDF created: {merged_path}")

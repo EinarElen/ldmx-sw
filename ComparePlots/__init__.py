@@ -2,6 +2,7 @@
 
 from ._file import File
 from ._differ import Differ
+from ._merger import merge_pdfs
 from . import ecal
 from . import trigscint
 from . import hcal

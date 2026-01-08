@@ -1,0 +1,251 @@
+/**
+ * @file LDMXCascadeInterface.h
+ * @brief Custom Bertini cascade interface that captures cascade history
+ *
+ * This class provides access to the internal Bertini cascade history
+ * for recording photonuclear interaction details in LDMX event files.
+ */
+
+#ifndef SIMCORE_BERTINI_LDMXCASCADEINTERFACE_H
+#define SIMCORE_BERTINI_LDMXCASCADEINTERFACE_H
+
+// IMPORTANT: Include the hack header FIRST to expose private members
+#include "Framework/Logger.h"
+#include "SimCore/Bertini/CascadeHistory.h"
+#include "SimCore/Bertini/G4BertiniHack.h"
+
+class G4HadProjectile;
+class G4Nucleus;
+class G4HadFinalState;
+class G4ElementaryParticleCollider;
+
+namespace simcore {
+namespace bertini {
+
+// Forward declarations
+class LDMXIntraNucleiCascader;
+class LDMXElementaryParticleCollider;
+class KaonBiasedElementaryCollider;
+
+/**
+ * @class LDMXCascadeInterface
+ * @brief Extended Bertini interface that captures cascade history for LDMX
+ *
+ * This class inherits from G4CascadeInterface and uses the preprocessor
+ * hack to access internal data members. After each ApplyYourself() call,
+ * the cascade history can be extracted in LDMX format.
+ *
+ * Usage:
+ *   1. Call ApplyYourself() as normal (base class handles cascade)
+ *   2. Call extractHistory() to get the LDMX-format cascade history
+ *   3. Store history keyed by initiating track ID
+ */
+class LDMXCascadeInterface : public G4CascadeInterface {
+ public:
+  LDMXCascadeInterface(const G4String& name = "LDMXBertiniCascade");
+  virtual ~LDMXCascadeInterface();
+
+  /**
+   * Override ApplyYourself to capture history after cascade completes
+   */
+  G4HadFinalState* ApplyYourself(const G4HadProjectile& projectile,
+                                 G4Nucleus& targetNucleus) override;
+
+  /**
+   * Enable or disable history recording
+   */
+  void setRecordHistory(bool record) { record_history_ = record; }
+
+  /**
+   * Check if history recording is enabled
+   */
+  bool isRecordingHistory() const { return record_history_; }
+
+  /**
+   * Set the minimum photon energy threshold for recording history [MeV]
+   * Only cascades initiated by photons above this energy will be recorded.
+   * Default is 5000 MeV (5 GeV), matching the typical ECal PN bias threshold.
+   */
+  void setEnergyThreshold(double threshold) { energy_threshold_ = threshold; }
+
+  /**
+   * Get the current energy threshold [MeV]
+   */
+  double getEnergyThreshold() const { return energy_threshold_; }
+
+  /**
+   * Get the captured history from the last ApplyYourself call
+   * Returns nullptr if no history was captured
+   */
+  const ldmx::CascadeHistory* getLastCascadeHistory() const {
+    return last_history_.empty() ? nullptr : &last_history_;
+  }
+
+  /**
+   * Move the captured history out
+   * This allows efficient transfer without copying
+   */
+  ldmx::CascadeHistory extractHistory() { return std::move(last_history_); }
+
+  /**
+   * Check if the last cascade produced history
+   */
+  bool hasHistory() const { return !last_history_.empty(); }
+
+  /**
+   * Set the track ID of the incident particle for history tagging
+   */
+  void setIncidentTrackId(int trackId) { incident_track_id_ = trackId; }
+
+  /**
+   * Replace the elementary particle collider in the cascader
+   * @param collider The new collider (cascader takes ownership)
+   */
+  void setElementaryParticleCollider(G4ElementaryParticleCollider* collider);
+
+  /**
+   * Enable the LDMX wrapper collider with logging
+   * This replaces the default Bertini collider with LDMXElementaryParticleCollider
+   */
+  void enableWrapperCollider();
+
+  /**
+   * Get the internal LDMX cascader (for direct access)
+   * Returns nullptr if the cascader is not an LDMXIntraNucleiCascader
+   */
+  LDMXIntraNucleiCascader* getLDMXCascader();
+
+  /**
+   * Get the wrapper collider (for accessing collision info)
+   * Returns nullptr if wrapper collider is not installed
+   */
+  LDMXElementaryParticleCollider* getWrapperCollider();
+
+  /**
+   * Get the kaon-biased collider (for accessing bias info)
+   * Returns nullptr if kaon biasing is not enabled
+   */
+  KaonBiasedElementaryCollider* getKaonBiasedCollider();
+
+  // --- Kaon biasing configuration ---
+
+  /**
+   * Enable kaon biasing with rejection sampling.
+   * This replaces the wrapper collider with a kaon-biased version.
+   * @param biasFactor Enhancement factor for kaon production (>1 enhances kaons)
+   */
+  void enableKaonBiasing(double biasFactor);
+
+  /**
+   * Set kaon bias photon energy range [MeV].
+   * Biasing only applied for photons within this energy range.
+   */
+  void setKaonBiasPhotonEnergyRange(double minE, double maxE) {
+    kaonBiasMinPhotonEnergy_ = minE;
+    kaonBiasMaxPhotonEnergy_ = maxE;
+  }
+
+  /**
+   * Set maximum regeneration attempts for kaon biasing.
+   */
+  void setKaonBiasMaxAttempts(int max) { kaonBiasMaxAttempts_ = max; }
+
+  /**
+   * Check if kaon biasing is enabled.
+   */
+  bool isKaonBiasingEnabled() const { return useKaonBiasing_; }
+
+  /**
+   * Get the kaon bias factor.
+   */
+  double getKaonBiasFactor() const { return kaonBiasFactor_; }
+
+ private:
+  /**
+   * Ensure the G4CascadeHistory object exists in the cascader
+   * Geant4 only creates this if G4CASCADE_SHOW_HISTORY envvar is set,
+   * so we force-create it here to enable history capture.
+   */
+  void ensureCascadeHistoryExists();
+
+  /**
+   * Extract history from the internal G4CascadeHistory
+   * Navigates: this->collider->theIntraNucleiCascader->theCascadeHistory
+   */
+  void captureHistory();
+
+  /**
+   * Capture de-excitation products from G4HadFinalState
+   *
+   * De-excitation (evaporation, gamma emission, fission) happens AFTER the
+   * intranuclear cascade and is handled by G4ExcitationHandler. These products
+   * appear in the final state but are NOT recorded in G4CascadeHistory.
+   *
+   * This method compares the G4HadFinalState secondaries with the cascade
+   * escaped particles and identifies de-excitation products as those particles
+   * in the final state that don't match any cascade escapee.
+   *
+   * @param finalState The G4HadFinalState from ApplyYourself
+   */
+  void captureDeexcitationProducts(G4HadFinalState* finalState);
+
+  /**
+   * Enrich cascade history steps with collision info from wrapper collider
+   *
+   * This matches recorded collision info (sqrt(s), target nucleon, nucleus
+   * state) to cascade history steps based on bullet PDG and momentum.
+   * Only effective if wrapper collider is installed.
+   */
+  void enrichWithCollisionInfo();
+
+  /**
+   * Propagate the cumulative bias weight from the collider to the event.
+   * This multiplies the bias weight into UserEventInformation.
+   */
+  void propagateBiasWeightToEvent();
+
+  /** Whether to record cascade history */
+  bool record_history_{true};
+
+  /** Minimum photon energy threshold for recording [MeV] */
+  double energy_threshold_{5000.0};  // 5 GeV default (matches ECal PN bias)
+
+  /** Track ID of incident particle */
+  int incident_track_id_{-1};
+
+  /** Captured history from last cascade */
+  ldmx::CascadeHistory last_history_;
+
+  /** Whether to use the wrapper collider (deferred until first ApplyYourself) */
+  bool useWrapperCollider_{false};
+
+  /** Whether we've already installed the wrapper collider */
+  bool wrapperColliderInstalled_{false};
+
+  // --- Kaon biasing configuration ---
+
+  /** Whether to use kaon biasing */
+  bool useKaonBiasing_{false};
+
+  /** Kaon bias enhancement factor */
+  double kaonBiasFactor_{1.0};
+
+  /** Minimum photon energy for kaon biasing [MeV] */
+  double kaonBiasMinPhotonEnergy_{2000.0};
+
+  /** Maximum photon energy for kaon biasing [MeV] */
+  double kaonBiasMaxPhotonEnergy_{10000.0};
+
+  /** Maximum regeneration attempts for kaon biasing */
+  int kaonBiasMaxAttempts_{100};
+
+  /** Whether kaon-biased collider has been installed */
+  bool kaonBiasColliderInstalled_{false};
+
+  enableLogging("LDMXCascadeInterface")
+};
+
+}  // namespace bertini
+}  // namespace simcore
+
+#endif  // SIMCORE_BERTINI_LDMXCASCADEINTERFACE_H

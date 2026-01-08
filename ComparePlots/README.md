@@ -45,3 +45,25 @@ then run the following command.
 just compare-plots compareDir/  --systems ecal.shower_feats
 ```
 This will produce plots in the `compareDir` directory and will include "new" and "ref" in the plot legend.
+
+### PDF Merging
+By default, when generating PDF plots, ComparePlots will automatically merge all generated
+PDFs into a single multi-page document (`all_plots.pdf`) with bookmarks for navigation.
+This makes it easy to browse through all plots in a PDF viewer.
+
+The merged PDF is organized by subdirectory, with bookmarks for:
+- Each subdirectory (section)
+- Each individual plot (under its section)
+
+To disable PDF merging:
+```
+just compare-plots compareDir/ --systems ecal.shower_feats --no-merge-pdfs
+```
+
+To customize the merged PDF filename:
+```
+just compare-plots compareDir/ --systems ecal.shower_feats --merged-pdf-name summary.pdf
+```
+
+Note: PDF merging requires the `pypdf` package. If not installed, merging will be skipped
+with a warning message.
