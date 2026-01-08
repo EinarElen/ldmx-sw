@@ -15,13 +15,13 @@
 #pragma link C++ namespace ldmx;
 
 // Cascade step data class
-#pragma link C++ class ldmx::CascadeStep+;
-#pragma link C++ class std::vector<ldmx::CascadeStep>+;
+#pragma link C++ class ldmx::CascadeStep + ;
+#pragma link C++ class std::vector < ldmx::CascadeStep> + ;
 
 // Cascade history container
-#pragma link C++ class ldmx::CascadeHistory+;
+#pragma link C++ class ldmx::CascadeHistory + ;
 
 // Map for storing histories keyed by track ID
-#pragma link C++ class std::map<int, ldmx::CascadeHistory>+;
+#pragma link C++ class std::map < int, ldmx::CascadeHistory> + ;
 
 #endif

@@ -1,6 +1,7 @@
 /**
  * @file CascadeStep.h
- * @brief Data class representing a single step in the Bertini intranuclear cascade
+ * @brief Data class representing a single step in the Bertini intranuclear
+ * cascade
  */
 
 #ifndef SIMCORE_BERTINI_CASCADESTEP_H
@@ -21,14 +22,16 @@ namespace ldmx {
  * whether the particle escaped or interacted.
  */
 enum class CascadeStage : int {
-  UNKNOWN = 0,       ///< Unclassified
-  INCIDENT = 1,      ///< The incident particle (generation 0)
-  PRIMARY = 2,       ///< Direct products of initial photon-nucleon interaction
-  CASCADE = 3,       ///< Products of subsequent intranuclear scattering
-  PREEQUILIBRIUM = 4,///< Fast particles escaping before equilibration
-  ABSORBED = 5,      ///< Particles absorbed by the nucleus (no daughters, no escape)
-  SPECTATOR = 6,     ///< Knocked-out nucleons from quasi-deuteron breakup
-  DEEXCITATION = 7   ///< Products from nuclear de-excitation (evaporation, gamma)
+  UNKNOWN = 0,   ///< Unclassified
+  INCIDENT = 1,  ///< The incident particle (generation 0)
+  PRIMARY = 2,   ///< Direct products of initial photon-nucleon interaction
+  CASCADE = 3,   ///< Products of subsequent intranuclear scattering
+  PREEQUILIBRIUM = 4,  ///< Fast particles escaping before equilibration
+  ABSORBED =
+      5,  ///< Particles absorbed by the nucleus (no daughters, no escape)
+  SPECTATOR = 6,  ///< Knocked-out nucleons from quasi-deuteron breakup
+  DEEXCITATION =
+      7  ///< Products from nuclear de-excitation (evaporation, gamma)
 };
 
 /**
@@ -62,13 +65,13 @@ class CascadeStep {
   // --- Setters ---
 
   /** Set the history ID (unique within this cascade) */
-  void setHistoryId(int id) { historyId_ = id; }
+  void setHistoryId(int id) { history_id_ = id; }
 
   /** Set the parent history ID (-1 if this is the incident particle) */
-  void setParentId(int id) { parentId_ = id; }
+  void setParentId(int id) { parent_id_ = id; }
 
   /** Set the PDG particle ID */
-  void setPdgId(int id) { pdgId_ = id; }
+  void setPdgId(int id) { pdg_id_ = id; }
 
   /** Set the 4-momentum components [MeV] */
   void setMomentum(double px, double py, double pz, double e) {
@@ -95,13 +98,14 @@ class CascadeStep {
   void setPath(double path) { path_ = path; }
 
   /** Set the daughter history IDs */
-  void setDaughterIds(const std::vector<int>& ids) { daughterIds_ = ids; }
+  void setDaughterIds(const std::vector<int>& ids) { daughter_ids_ = ids; }
 
   /** Add a daughter history ID */
-  void addDaughterId(int id) { daughterIds_.push_back(id); }
+  void addDaughterId(int id) { daughter_ids_.push_back(id); }
 
-  /** Set the target nucleon type (PDG code: 2212=proton, 2112=neutron, 0=none) */
-  void setTargetPdgId(int id) { targetPdgId_ = id; }
+  /** Set the target nucleon type (PDG code: 2212=proton, 2112=neutron, 0=none)
+   */
+  void setTargetPdgId(int id) { target_pdg_id_ = id; }
 
   /** Set whether this particle interacted (produced daughters) */
   void setInteracted(bool interacted) { interacted_ = interacted; }
@@ -117,9 +121,9 @@ class CascadeStep {
 
   // --- Getters ---
 
-  int getHistoryId() const { return historyId_; }
-  int getParentId() const { return parentId_; }
-  int getPdgId() const { return pdgId_; }
+  int getHistoryId() const { return history_id_; }
+  int getParentId() const { return parent_id_; }
+  int getPdgId() const { return pdg_id_; }
 
   double getPx() const { return px_; }
   double getPy() const { return py_; }
@@ -134,10 +138,10 @@ class CascadeStep {
   int getZone() const { return zone_; }
   double getPath() const { return path_; }
 
-  const std::vector<int>& getDaughterIds() const { return daughterIds_; }
-  int getNumDaughters() const { return static_cast<int>(daughterIds_.size()); }
+  const std::vector<int>& getDaughterIds() const { return daughter_ids_; }
+  int getNumDaughters() const { return static_cast<int>(daughter_ids_.size()); }
 
-  int getTargetPdgId() const { return targetPdgId_; }
+  int getTargetPdgId() const { return target_pdg_id_; }
   bool didInteract() const { return interacted_; }
   bool didEscape() const { return escaped_; }
   CascadeStage getStage() const { return stage_; }
@@ -149,13 +153,13 @@ class CascadeStep {
 
  private:
   /** History ID within this cascade (unique per cascade) */
-  int historyId_{-1};
+  int history_id_{-1};
 
   /** Parent's history ID (-1 for incident particle) */
-  int parentId_{-1};
+  int parent_id_{-1};
 
   /** PDG particle ID */
-  int pdgId_{0};
+  int pdg_id_{0};
 
   /** 4-momentum components [MeV] */
   double px_{0};
@@ -178,10 +182,10 @@ class CascadeStep {
   double path_{0};
 
   /** History IDs of daughter particles (empty if no interaction) */
-  std::vector<int> daughterIds_;
+  std::vector<int> daughter_ids_;
 
   /** PDG code of target nucleon (2212=p, 2112=n, 0=none) */
-  int targetPdgId_{0};
+  int target_pdg_id_{0};
 
   /** Whether this particle interacted to produce daughters */
   bool interacted_{false};

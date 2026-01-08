@@ -10,13 +10,14 @@ namespace bertini {
 
 CascadeHistoryStore& CascadeHistoryStore::getInstance() {
   // Meyer's singleton with thread_local for multi-threaded Geant4
-  // The static local variable is constructed on first use by this member function
-  // which has access to the private constructor
+  // The static local variable is constructed on first use by this member
+  // function which has access to the private constructor
   thread_local CascadeHistoryStore instance;
   return instance;
 }
 
-void CascadeHistoryStore::addHistory(int trackId, ldmx::CascadeHistory history) {
+void CascadeHistoryStore::addHistory(int trackId,
+                                     ldmx::CascadeHistory history) {
   // If there's already a history for this track, merge or replace
   // For now, we replace (shouldn't happen unless track ID recycling)
   histories_[trackId] = std::move(history);

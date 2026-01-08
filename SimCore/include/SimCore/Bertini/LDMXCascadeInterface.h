@@ -10,10 +10,9 @@
 #define SIMCORE_BERTINI_LDMXCASCADEINTERFACE_H
 
 // IMPORTANT: Include the hack header FIRST to expose private members
-#include "SimCore/Bertini/G4BertiniHack.h"
-
 #include "Framework/Logger.h"
 #include "SimCore/Bertini/CascadeHistory.h"
+#include "SimCore/Bertini/G4BertiniHack.h"
 
 class G4HadProjectile;
 class G4Nucleus;
@@ -49,48 +48,48 @@ class LDMXCascadeInterface : public G4CascadeInterface {
   /**
    * Enable or disable history recording
    */
-  void setRecordHistory(bool record) { recordHistory_ = record; }
+  void setRecordHistory(bool record) { record_history_ = record; }
 
   /**
    * Check if history recording is enabled
    */
-  bool isRecordingHistory() const { return recordHistory_; }
+  bool isRecordingHistory() const { return record_history_; }
 
   /**
    * Set the minimum photon energy threshold for recording history [MeV]
    * Only cascades initiated by photons above this energy will be recorded.
    * Default is 5000 MeV (5 GeV), matching the typical ECal PN bias threshold.
    */
-  void setEnergyThreshold(double threshold) { energyThreshold_ = threshold; }
+  void setEnergyThreshold(double threshold) { energy_threshold_ = threshold; }
 
   /**
    * Get the current energy threshold [MeV]
    */
-  double getEnergyThreshold() const { return energyThreshold_; }
+  double getEnergyThreshold() const { return energy_threshold_; }
 
   /**
    * Get the captured history from the last ApplyYourself call
    * Returns nullptr if no history was captured
    */
   const ldmx::CascadeHistory* getLastCascadeHistory() const {
-    return lastHistory_.empty() ? nullptr : &lastHistory_;
+    return last_history_.empty() ? nullptr : &last_history_;
   }
 
   /**
    * Move the captured history out
    * This allows efficient transfer without copying
    */
-  ldmx::CascadeHistory extractHistory() { return std::move(lastHistory_); }
+  ldmx::CascadeHistory extractHistory() { return std::move(last_history_); }
 
   /**
    * Check if the last cascade produced history
    */
-  bool hasHistory() const { return !lastHistory_.empty(); }
+  bool hasHistory() const { return !last_history_.empty(); }
 
   /**
    * Set the track ID of the incident particle for history tagging
    */
-  void setIncidentTrackId(int trackId) { incidentTrackId_ = trackId; }
+  void setIncidentTrackId(int trackId) { incident_track_id_ = trackId; }
 
  private:
   /**
@@ -122,16 +121,16 @@ class LDMXCascadeInterface : public G4CascadeInterface {
   void captureDeexcitationProducts(G4HadFinalState* finalState);
 
   /** Whether to record cascade history */
-  bool recordHistory_{true};
+  bool record_history_{true};
 
   /** Minimum photon energy threshold for recording [MeV] */
-  double energyThreshold_{5000.0};  // 5 GeV default (matches ECal PN bias)
+  double energy_threshold_{5000.0};  // 5 GeV default (matches ECal PN bias)
 
   /** Track ID of incident particle */
-  int incidentTrackId_{-1};
+  int incident_track_id_{-1};
 
   /** Captured history from last cascade */
-  ldmx::CascadeHistory lastHistory_;
+  ldmx::CascadeHistory last_history_;
 
   enableLogging("LDMXCascadeInterface")
 };

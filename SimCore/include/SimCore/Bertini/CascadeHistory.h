@@ -15,7 +15,8 @@ namespace ldmx {
 
 /**
  * @class CascadeHistory
- * @brief Container storing the complete step-by-step history of a Bertini cascade
+ * @brief Container storing the complete step-by-step history of a Bertini
+ * cascade
  *
  * This class stores all CascadeStep objects that occurred during a single
  * photonuclear interaction (one G4CascadeInterface::ApplyYourself call).
@@ -37,24 +38,24 @@ class CascadeHistory {
   // --- Modification ---
 
   /** Set the track ID of the photon that initiated this cascade */
-  void setIncidentTrackId(int trackId) { incidentTrackId_ = trackId; }
+  void setIncidentTrackId(int trackId) { incident_track_id_ = trackId; }
 
   /** Set the target nucleus (A, Z) */
   void setTargetNucleus(int a, int z) {
-    targetA_ = a;
-    targetZ_ = z;
+    target_a_ = a;
+    target_z_ = z;
   }
 
   /** Set the incident photon energy [MeV] */
-  void setIncidentEnergy(double energy) { incidentEnergy_ = energy; }
+  void setIncidentEnergy(double energy) { incident_energy_ = energy; }
 
   /** Set the excitation energy of the residual nucleus [MeV] */
-  void setExcitationEnergy(double energy) { excitationEnergy_ = energy; }
+  void setExcitationEnergy(double energy) { excitation_energy_ = energy; }
 
   /** Set the residual nucleus after cascade (A, Z) */
   void setResidualNucleus(int a, int z) {
-    residualA_ = a;
-    residualZ_ = z;
+    residual_a_ = a;
+    residual_z_ = z;
   }
 
   /** Add a step to the history */
@@ -69,25 +70,25 @@ class CascadeHistory {
   // --- Access ---
 
   /** Get the track ID of the initiating photon */
-  int getIncidentTrackId() const { return incidentTrackId_; }
+  int getIncidentTrackId() const { return incident_track_id_; }
 
   /** Get target nucleus mass number */
-  int getTargetA() const { return targetA_; }
+  int getTargetA() const { return target_a_; }
 
   /** Get target nucleus charge */
-  int getTargetZ() const { return targetZ_; }
+  int getTargetZ() const { return target_z_; }
 
   /** Get the incident photon energy [MeV] */
-  double getIncidentEnergy() const { return incidentEnergy_; }
+  double getIncidentEnergy() const { return incident_energy_; }
 
   /** Get the excitation energy of the residual nucleus [MeV] */
-  double getExcitationEnergy() const { return excitationEnergy_; }
+  double getExcitationEnergy() const { return excitation_energy_; }
 
   /** Get residual nucleus mass number after cascade */
-  int getResidualA() const { return residualA_; }
+  int getResidualA() const { return residual_a_; }
 
   /** Get residual nucleus charge after cascade */
-  int getResidualZ() const { return residualZ_; }
+  int getResidualZ() const { return residual_z_; }
 
   /** Get the number of steps in the cascade */
   size_t getNumSteps() const { return steps_.size(); }
@@ -129,25 +130,25 @@ class CascadeHistory {
 
  private:
   /** Track ID of the photon that initiated this cascade */
-  int incidentTrackId_{-1};
+  int incident_track_id_{-1};
 
   /** Target nucleus mass number */
-  int targetA_{0};
+  int target_a_{0};
 
   /** Target nucleus charge */
-  int targetZ_{0};
+  int target_z_{0};
 
   /** Incident photon energy [MeV] */
-  double incidentEnergy_{0.0};
+  double incident_energy_{0.0};
 
   /** Excitation energy of residual nucleus [MeV] */
-  double excitationEnergy_{0.0};
+  double excitation_energy_{0.0};
 
   /** Residual nucleus mass number after cascade */
-  int residualA_{0};
+  int residual_a_{0};
 
   /** Residual nucleus charge after cascade */
-  int residualZ_{0};
+  int residual_z_{0};
 
   /** Ordered list of all cascade steps */
   std::vector<CascadeStep> steps_;

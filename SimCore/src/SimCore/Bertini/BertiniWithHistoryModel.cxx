@@ -34,8 +34,8 @@ void BertiniWithHistoryModel::constructGammaProcess(
   ldmx_log(info) << "  Energy threshold: " << energyThreshold_ << " MeV";
 
   // Create the photonuclear process
-  auto photoNuclearProcess = new G4HadronInelasticProcess(
-      "photonNuclear", G4Gamma::Definition());
+  auto photo_nuclear_process =
+      new G4HadronInelasticProcess("photonNuclear", G4Gamma::Definition());
 
   // Create our custom cascade interface with history capture
   auto model = new LDMXCascadeInterface("LDMXBertiniWithHistory");
@@ -46,13 +46,13 @@ void BertiniWithHistoryModel::constructGammaProcess(
   ldmx_log(info) << "  Created LDMXCascadeInterface model";
 
   // Add cross section data (uses base class implementation)
-  addPNCrossSectionData(photoNuclearProcess);
+  addPNCrossSectionData(photo_nuclear_process);
 
   // Register our model with the process
-  photoNuclearProcess->RegisterMe(model);
+  photo_nuclear_process->RegisterMe(model);
 
   // Add the process to the gamma's process manager
-  processManager->AddDiscreteProcess(photoNuclearProcess);
+  processManager->AddDiscreteProcess(photo_nuclear_process);
 
   ldmx_log(info) << "  Photonuclear process added to gamma";
 }

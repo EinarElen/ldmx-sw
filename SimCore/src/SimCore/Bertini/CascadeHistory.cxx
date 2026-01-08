@@ -66,13 +66,13 @@ std::vector<const CascadeStep*> CascadeHistory::getEscapedSteps() const {
 }
 
 int CascadeHistory::getMaxGeneration() const {
-  int maxGen = -1;
+  int max_gen = -1;
   for (const auto& step : steps_) {
-    if (step.getGeneration() > maxGen) {
-      maxGen = step.getGeneration();
+    if (step.getGeneration() > max_gen) {
+      max_gen = step.getGeneration();
     }
   }
-  return maxGen;
+  return max_gen;
 }
 
 int CascadeHistory::getNumInteractions() const {

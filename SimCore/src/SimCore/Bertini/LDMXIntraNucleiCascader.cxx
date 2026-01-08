@@ -59,9 +59,9 @@ void LDMXIntraNucleiCascader::captureHistory() {
   // With our hack, private becomes protected, so we can access it.
 
   // Get the size - G4CascadeHistory::size() is protected
-  const int numEntries = theCascadeHistory->size();
+  const int num_entries = theCascadeHistory->size();
 
-  lastHistory_.reserve(numEntries);
+  lastHistory_.reserve(num_entries);
 
   // We need to iterate through the history entries
   // The hack makes theHistory accessible as protected
@@ -69,32 +69,32 @@ void LDMXIntraNucleiCascader::captureHistory() {
 
   // Access theHistory vector directly via the hack
   // theHistory is now protected due to #define private protected
-  const auto& historyEntries = theCascadeHistory->theHistory;
+  const auto& history_entries = theCascadeHistory->theHistory;
 
   // Build a map of parent IDs for each entry
   // The parent of entry i is the entry whose daughter list contains i
-  std::vector<int> parentIds(numEntries, -1);
+  std::vector<int> parent_ids(num_entries, -1);
 
-  for (int i = 0; i < numEntries; ++i) {
-    const auto& entry = historyEntries[i];
+  for (int i = 0; i < num_entries; ++i) {
+    const auto& entry = history_entries[i];
     // For each daughter of this entry, set its parent to this entry's ID
     for (int d = 0; d < entry.n && d < 10; ++d) {
-      int daughterId = entry.dId[d];
-      if (daughterId >= 0 && daughterId < numEntries) {
-        parentIds[daughterId] = i;
+      int daughter_id = entry.dId[d];
+      if (daughter_id >= 0 && daughter_id < num_entries) {
+        parent_ids[daughter_id] = i;
       }
     }
   }
 
   // Now convert each entry to a CascadeStep
-  for (int i = 0; i < numEntries; ++i) {
-    const auto& entry = historyEntries[i];
+  for (int i = 0; i < num_entries; ++i) {
+    const auto& entry = history_entries[i];
     const G4CascadParticle& cpart = entry.cpart;
 
     // Collect daughter IDs
-    std::vector<int> daughterIds;
+    std::vector<int> daughter_ids;
     for (int d = 0; d < entry.n && d < 10; ++d) {
-      daughterIds.push_back(entry.dId[d]);
+      daughter_ids.push_back(entry.dId[d]);
     }
 
     // Determine if particle interacted (has daughters)
@@ -107,7 +107,7 @@ void LDMXIntraNucleiCascader::captureHistory() {
     bool escaped = !interacted;  // Simplified: non-interacting = escaped
 
     ldmx::CascadeStep step =
-        convertStep(cpart, parentIds[i], daughterIds, interacted, escaped);
+        convertStep(cpart, parent_ids[i], daughter_ids, interacted, escaped);
 
     lastHistory_.addStep(std::move(step));
   }

@@ -67,8 +67,8 @@
 
 // Include the Geant4 Bertini cascade headers we need to hack
 // Order matters: include base classes before derived classes
-#include "G4CascadeHistory.hh"
 #include "G4CascadParticle.hh"
+#include "G4CascadeHistory.hh"
 #include "G4CollisionOutput.hh"
 #include "G4ElementaryParticleCollider.hh"
 #include "G4IntraNucleiCascader.hh"

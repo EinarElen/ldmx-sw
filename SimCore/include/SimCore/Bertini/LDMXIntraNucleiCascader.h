@@ -11,9 +11,8 @@
 #define SIMCORE_BERTINI_LDMXINTRANUCLEICASCADER_H
 
 // IMPORTANT: Include the hack header FIRST to expose private members
-#include "SimCore/Bertini/G4BertiniHack.h"
-
 #include "SimCore/Bertini/CascadeHistory.h"
+#include "SimCore/Bertini/G4BertiniHack.h"
 
 namespace simcore {
 namespace bertini {
@@ -46,31 +45,31 @@ class LDMXIntraNucleiCascader : public G4IntraNucleiCascader {
    * Enable or disable history recording
    * When disabled, no history is captured (slight performance improvement)
    */
-  void setRecordHistory(bool record) { recordHistory_ = record; }
+  void setRecordHistory(bool record) { record_history_ = record; }
 
   /**
    * Check if history recording is enabled
    */
-  bool isRecordingHistory() const { return recordHistory_; }
+  bool isRecordingHistory() const { return record_history_; }
 
   /**
    * Get the captured history from the last cascade
    * Returns nullptr if no history was captured or recording is disabled
    */
   const ldmx::CascadeHistory* getLastCascadeHistory() const {
-    return lastHistory_.empty() ? nullptr : &lastHistory_;
+    return last_history_.empty() ? nullptr : &last_history_;
   }
 
   /**
    * Move the captured history out of the cascader
    * This allows efficient transfer without copying
    */
-  ldmx::CascadeHistory extractHistory() { return std::move(lastHistory_); }
+  ldmx::CascadeHistory extractHistory() { return std::move(last_history_); }
 
   /**
    * Set the track ID of the incident particle for history tagging
    */
-  void setIncidentTrackId(int trackId) { incidentTrackId_ = trackId; }
+  void setIncidentTrackId(int trackId) { incident_track_id_ = trackId; }
 
  private:
   /**
@@ -92,13 +91,13 @@ class LDMXIntraNucleiCascader : public G4IntraNucleiCascader {
   int getPdgCode(int inuclType) const;
 
   /** Whether to record cascade history */
-  bool recordHistory_{true};
+  bool record_history_{true};
 
   /** Track ID of incident particle */
-  int incidentTrackId_{-1};
+  int incident_track_id_{-1};
 
   /** Captured history from last cascade */
-  ldmx::CascadeHistory lastHistory_;
+  ldmx::CascadeHistory last_history_;
 };
 
 }  // namespace bertini

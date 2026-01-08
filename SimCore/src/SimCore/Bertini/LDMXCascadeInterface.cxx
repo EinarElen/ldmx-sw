@@ -7,8 +7,8 @@
 
 #include <G4HadFinalState.hh>
 #include <G4HadSecondary.hh>
-#include "G4InuclParticleNames.hh"
 
+#include "G4InuclParticleNames.hh"
 #include "SimCore/Bertini/CascadeHistoryStore.h"
 
 namespace simcore {
@@ -22,13 +22,14 @@ namespace {
  * correlated nucleon pairs in the nucleus that absorb the photon.
  * Format: 99XXX where XXX matches the Bertini internal code.
  */
-constexpr int PDG_DIPROTON = 99111;    ///< pp quasi-deuteron (Bertini code 111)
-constexpr int PDG_UNBOUNDPN = 99112;   ///< pn quasi-deuteron (Bertini code 112)
-constexpr int PDG_DINEUTRON = 99122;   ///< nn quasi-deuteron (Bertini code 122)
+constexpr int PDG_DIPROTON = 99111;   ///< pp quasi-deuteron (Bertini code 111)
+constexpr int PDG_UNBOUNDPN = 99112;  ///< pn quasi-deuteron (Bertini code 112)
+constexpr int PDG_DINEUTRON = 99122;  ///< nn quasi-deuteron (Bertini code 122)
 
 /**
  * Get PDG code from Bertini internal type code
- * Uses manual mapping since G4InuclElementaryParticle::makeDefinition is protected
+ * Uses manual mapping since G4InuclElementaryParticle::makeDefinition is
+ * protected
  */
 int getPdgCode(int inuclType) {
   using namespace G4InuclParticleNames;
@@ -108,33 +109,33 @@ bool isQuasiDeuteron(int pdg) {
  */
 int getCharge(int pdg) {
   // Baryons
-  if (pdg == 2212) return +1;   // proton
-  if (pdg == 2112) return 0;    // neutron
-  if (pdg == 3122) return 0;    // Lambda
-  if (pdg == 3222) return +1;   // Sigma+
-  if (pdg == 3212) return 0;    // Sigma0
-  if (pdg == 3112) return -1;   // Sigma-
-  if (pdg == 3322) return 0;    // Xi0
-  if (pdg == 3312) return -1;   // Xi-
-  if (pdg == 3334) return -1;   // Omega-
+  if (pdg == 2212) return +1;  // proton
+  if (pdg == 2112) return 0;   // neutron
+  if (pdg == 3122) return 0;   // Lambda
+  if (pdg == 3222) return +1;  // Sigma+
+  if (pdg == 3212) return 0;   // Sigma0
+  if (pdg == 3112) return -1;  // Sigma-
+  if (pdg == 3322) return 0;   // Xi0
+  if (pdg == 3312) return -1;  // Xi-
+  if (pdg == 3334) return -1;  // Omega-
 
   // Mesons
-  if (pdg == 211) return +1;    // pi+
-  if (pdg == -211) return -1;   // pi-
-  if (pdg == 111) return 0;     // pi0
-  if (pdg == 321) return +1;    // K+
-  if (pdg == -321) return -1;   // K-
-  if (pdg == 311) return 0;     // K0
-  if (pdg == -311) return 0;    // K0bar
-  if (pdg == 310) return 0;     // K0S
-  if (pdg == 130) return 0;     // K0L
+  if (pdg == 211) return +1;   // pi+
+  if (pdg == -211) return -1;  // pi-
+  if (pdg == 111) return 0;    // pi0
+  if (pdg == 321) return +1;   // K+
+  if (pdg == -321) return -1;  // K-
+  if (pdg == 311) return 0;    // K0
+  if (pdg == -311) return 0;   // K0bar
+  if (pdg == 310) return 0;    // K0S
+  if (pdg == 130) return 0;    // K0L
 
   // Leptons/photons
-  if (pdg == 22) return 0;      // photon
-  if (pdg == 11) return -1;     // electron
-  if (pdg == -11) return +1;    // positron
-  if (pdg == 13) return -1;     // muon-
-  if (pdg == -13) return +1;    // muon+
+  if (pdg == 22) return 0;    // photon
+  if (pdg == 11) return -1;   // electron
+  if (pdg == -11) return +1;  // positron
+  if (pdg == 13) return -1;   // muon-
+  if (pdg == -13) return +1;  // muon+
 
   // Light nuclei
   if (pdg == 1000010020) return +1;  // deuteron
@@ -157,7 +158,8 @@ int getCharge(int pdg) {
 int getBaryonNumber(int pdg) {
   // Baryons
   if (pdg == 2212 || pdg == 2112) return +1;  // p, n
-  if (pdg == 3122 || pdg == 3222 || pdg == 3212 || pdg == 3112) return +1;  // Lambda, Sigmas
+  if (pdg == 3122 || pdg == 3222 || pdg == 3212 || pdg == 3112)
+    return +1;                                               // Lambda, Sigmas
   if (pdg == 3322 || pdg == 3312 || pdg == 3334) return +1;  // Xis, Omega
 
   // Light nuclei
@@ -167,7 +169,8 @@ int getBaryonNumber(int pdg) {
   if (pdg == 1000020040) return +4;  // alpha
 
   // Quasi-deuterons
-  if (pdg == PDG_DIPROTON || pdg == PDG_UNBOUNDPN || pdg == PDG_DINEUTRON) return +2;
+  if (pdg == PDG_DIPROTON || pdg == PDG_UNBOUNDPN || pdg == PDG_DINEUTRON)
+    return +2;
 
   return 0;  // mesons, leptons, photons
 }
@@ -191,8 +194,8 @@ int getBaryonNumber(int pdg) {
 int inferTargetPdg(int deltaCharge, int deltaBaryon) {
   if (deltaBaryon == 1) {
     // Single nucleon target
-    if (deltaCharge == 1) return 2212;   // proton
-    if (deltaCharge == 0) return 2112;   // neutron
+    if (deltaCharge == 1) return 2212;  // proton
+    if (deltaCharge == 0) return 2112;  // neutron
   } else if (deltaBaryon == 2) {
     // Quasi-deuteron target
     if (deltaCharge == 2) return PDG_DIPROTON;   // pp
@@ -212,11 +215,11 @@ LDMXCascadeInterface::~LDMXCascadeInterface() = default;
 G4HadFinalState* LDMXCascadeInterface::ApplyYourself(
     const G4HadProjectile& projectile, G4Nucleus& targetNucleus) {
   // Get incident photon energy (Geant4 uses MeV internally)
-  double photonEnergy = projectile.GetTotalEnergy();
+  double photon_energy = projectile.GetTotalEnergy();
 
   ldmx_log(debug) << "LDMXCascadeInterface::ApplyYourself called";
   ldmx_log(debug) << "  Track ID: " << incidentTrackId_;
-  ldmx_log(debug) << "  Photon energy: " << photonEnergy << " MeV";
+  ldmx_log(debug) << "  Photon energy: " << photon_energy << " MeV";
   ldmx_log(debug) << "  Energy threshold: " << energyThreshold_ << " MeV";
   ldmx_log(debug) << "  Recording history: " << (recordHistory_ ? "YES" : "NO");
 
@@ -225,9 +228,9 @@ G4HadFinalState* LDMXCascadeInterface::ApplyYourself(
 
   // Check if we should record history for this event
   // Only record if enabled AND photon energy is above threshold
-  bool shouldRecord = recordHistory_ && (photonEnergy >= energyThreshold_);
+  bool should_record = recordHistory_ && (photon_energy >= energyThreshold_);
 
-  if (shouldRecord) {
+  if (should_record) {
     ldmx_log(debug) << "  Will record history (above threshold)";
     // Ensure cascade history object exists before running the cascade
     // Normally G4 only creates this if G4CASCADE_SHOW_HISTORY is set,
@@ -248,11 +251,11 @@ G4HadFinalState* LDMXCascadeInterface::ApplyYourself(
   ldmx_log(debug) << "  Base class ApplyYourself returned";
 
   // Capture the history if recording is enabled and above threshold
-  if (shouldRecord) {
+  if (should_record) {
     captureHistory();
 
     // Store the incident photon energy in the history
-    lastHistory_.setIncidentEnergy(photonEnergy);
+    lastHistory_.setIncidentEnergy(photon_energy);
 
     ldmx_log(debug) << "  Captured cascade history with "
                     << lastHistory_.getSteps().size() << " steps";
@@ -270,7 +273,8 @@ G4HadFinalState* LDMXCascadeInterface::ApplyYourself(
     if (!lastHistory_.empty()) {
       CascadeHistoryStore::getInstance().addHistory(incidentTrackId_,
                                                     lastHistory_);
-      ldmx_log(debug) << "  Added history to store for track " << incidentTrackId_;
+      ldmx_log(debug) << "  Added history to store for track "
+                      << incidentTrackId_;
     } else {
       ldmx_log(debug) << "  History empty, not storing";
     }
@@ -295,7 +299,8 @@ void LDMXCascadeInterface::ensureCascadeHistoryExists() {
   }
 
   if (!cascader->theCascadeHistory) {
-    ldmx_log(debug) << "  ensureCascadeHistoryExists: creating G4CascadeHistory";
+    ldmx_log(debug)
+        << "  ensureCascadeHistoryExists: creating G4CascadeHistory";
     cascader->theCascadeHistory = new G4CascadeHistory;
   } else {
     ldmx_log(debug) << "  ensureCascadeHistoryExists: history already exists";
@@ -323,9 +328,9 @@ void LDMXCascadeInterface::captureHistory() {
 
   // Access the cascade history
   // G4IntraNucleiCascader::theCascadeHistory is private -> protected via hack
-  G4CascadeHistory* g4History = cascader->theCascadeHistory;
+  G4CascadeHistory* g4_history = cascader->theCascadeHistory;
 
-  if (!g4History) {
+  if (!g4_history) {
     return;
   }
 
@@ -342,22 +347,21 @@ void LDMXCascadeInterface::captureHistory() {
   // Access the history entries vector
   // G4CascadeHistory::theHistory is private -> protected via hack
   const std::vector<G4CascadeHistory::HistoryEntry>& entries =
-      g4History->theHistory;
+      g4_history->theHistory;
 
   if (entries.empty()) {
     return;
   }
 
   // Build parent ID map: for each entry, find which entry has it as a daughter
-  std::vector<int> parentIds(entries.size(), -1);
+  std::vector<int> parent_ids(entries.size(), -1);
 
   for (size_t i = 0; i < entries.size(); ++i) {
     const auto& entry = entries[i];
     for (int d = 0; d < entry.n && d < 10; ++d) {
-      int daughterId = entry.dId[d];
-      if (daughterId >= 0 &&
-          static_cast<size_t>(daughterId) < entries.size()) {
-        parentIds[daughterId] = static_cast<int>(i);
+      int daughter_id = entry.dId[d];
+      if (daughter_id >= 0 && static_cast<size_t>(daughter_id) < entries.size()) {
+        parent_ids[daughter_id] = static_cast<int>(i);
       }
     }
   }
@@ -369,7 +373,7 @@ void LDMXCascadeInterface::captureHistory() {
 
   for (size_t i = 0; i < entries.size(); ++i) {
     const auto& entry = entries[i];
-    int parentId = parentIds[i];
+    int parent_id = parent_ids[i];
 
     ldmx::CascadeStep step;
 
@@ -378,7 +382,7 @@ void LDMXCascadeInterface::captureHistory() {
 
     // Set IDs
     step.setHistoryId(cpart.getHistoryId());
-    step.setParentId(parentId);
+    step.setParentId(parent_id);
 
     // Convert Bertini type code to PDG
     step.setPdgId(getPdgCode(particle.type()));
@@ -398,11 +402,11 @@ void LDMXCascadeInterface::captureHistory() {
     step.setPath(cpart.getCurrentPath());
 
     // Collect daughter IDs
-    std::vector<int> daughterIds;
+    std::vector<int> daughter_ids;
     for (int d = 0; d < entry.n && d < 10; ++d) {
-      daughterIds.push_back(entry.dId[d]);
+      daughter_ids.push_back(entry.dId[d]);
     }
-    step.setDaughterIds(daughterIds);
+    step.setDaughterIds(daughter_ids);
 
     // Determine if particle interacted (has daughters)
     bool interacted = (entry.n > 0);
@@ -450,35 +454,36 @@ void LDMXCascadeInterface::captureHistory() {
     }
 
     // Get bullet particle's charge and baryon number
-    int bulletCharge = getCharge(step.getPdgId());
-    int bulletBaryon = getBaryonNumber(step.getPdgId());
+    int bullet_charge = getCharge(step.getPdgId());
+    int bullet_baryon = getBaryonNumber(step.getPdgId());
 
     // Sum up charge and baryon number of all daughters
-    int daughterCharge = 0;
-    int daughterBaryon = 0;
+    int daughter_charge = 0;
+    int daughter_baryon = 0;
 
-    for (int daughterId : step.getDaughterIds()) {
+    for (int daughter_id : step.getDaughterIds()) {
       // Find the daughter step by history ID
       for (const auto& s : steps) {
-        if (s.getHistoryId() == daughterId) {
-          daughterCharge += getCharge(s.getPdgId());
-          daughterBaryon += getBaryonNumber(s.getPdgId());
+        if (s.getHistoryId() == daughter_id) {
+          daughter_charge += getCharge(s.getPdgId());
+          daughter_baryon += getBaryonNumber(s.getPdgId());
           break;
         }
       }
     }
 
     // Infer target from conservation: target = daughters - bullet
-    int deltaCharge = daughterCharge - bulletCharge;
-    int deltaBaryon = daughterBaryon - bulletBaryon;
+    int delta_charge = daughter_charge - bullet_charge;
+    int delta_baryon = daughter_baryon - bullet_baryon;
 
-    int targetPdg = inferTargetPdg(deltaCharge, deltaBaryon);
-    step.setTargetPdgId(targetPdg);
+    int target_pdg = inferTargetPdg(delta_charge, delta_baryon);
+    step.setTargetPdgId(target_pdg);
 
     ldmx_log(debug) << "  Inferred target for step " << step.getHistoryId()
-                    << " (PDG=" << step.getPdgId() << "): "
-                    << "deltaQ=" << deltaCharge << ", deltaB=" << deltaBaryon
-                    << " -> target PDG=" << targetPdg;
+                    << " (PDG=" << step.getPdgId()
+                    << "): " << "deltaQ=" << delta_charge
+                    << ", deltaB=" << delta_baryon
+                    << " -> target PDG=" << target_pdg;
   }
 
   // Add all steps to history
@@ -490,34 +495,37 @@ void LDMXCascadeInterface::captureHistory() {
   // Calculate excitation energy and residual nucleus properties
   // Excitation energy = energy deposited in nucleus that doesn't escape
   // E_excitation = E_incident - sum(KE of escaped particles)
-  double totalEscapedEnergy = 0.0;
-  int escapedProtons = 0;
-  int escapedNeutrons = 0;
+  double total_escaped_energy = 0.0;
+  int escaped_protons = 0;
+  int escaped_neutrons = 0;
 
   for (const auto& step : lastHistory_.getSteps()) {
     if (step.didEscape()) {
-      totalEscapedEnergy += step.getKineticEnergy();
+      total_escaped_energy += step.getKineticEnergy();
       int pdg = step.getPdgId();
-      if (pdg == 2212) escapedProtons++;
-      else if (pdg == 2112) escapedNeutrons++;
+      if (pdg == 2212)
+        escaped_protons++;
+      else if (pdg == 2112)
+        escaped_neutrons++;
     }
   }
 
   // Calculate excitation energy
   // This is an approximation - true excitation energy includes binding energy
   // effects and would be more precisely calculated from residual nucleus mass
-  double excitationEnergy = lastHistory_.getIncidentEnergy() - totalEscapedEnergy;
-  if (excitationEnergy < 0) excitationEnergy = 0;  // Can't be negative
-  lastHistory_.setExcitationEnergy(excitationEnergy);
+  double excitation_energy =
+      lastHistory_.getIncidentEnergy() - total_escaped_energy;
+  if (excitation_energy < 0) excitation_energy = 0;  // Can't be negative
+  lastHistory_.setExcitationEnergy(excitation_energy);
 
   // Calculate residual nucleus (A, Z)
-  int targetA = lastHistory_.getTargetA();
-  int targetZ = lastHistory_.getTargetZ();
-  int residualA = targetA - escapedProtons - escapedNeutrons;
-  int residualZ = targetZ - escapedProtons;
-  if (residualA < 0) residualA = 0;
-  if (residualZ < 0) residualZ = 0;
-  lastHistory_.setResidualNucleus(residualA, residualZ);
+  int target_a = lastHistory_.getTargetA();
+  int target_z = lastHistory_.getTargetZ();
+  int residual_a = target_a - escaped_protons - escaped_neutrons;
+  int residual_z = target_z - escaped_protons;
+  if (residual_a < 0) residual_a = 0;
+  if (residual_z < 0) residual_z = 0;
+  lastHistory_.setResidualNucleus(residual_a, residual_z);
 }
 
 void LDMXCascadeInterface::captureDeexcitationProducts(
@@ -527,12 +535,12 @@ void LDMXCascadeInterface::captureDeexcitationProducts(
   }
 
   // Get the number of secondaries in the final state
-  int nSecondaries = finalState->GetNumberOfSecondaries();
-  if (nSecondaries == 0) {
+  int n_secondaries = finalState->GetNumberOfSecondaries();
+  if (n_secondaries == 0) {
     return;
   }
 
-  ldmx_log(debug) << "  captureDeexcitationProducts: " << nSecondaries
+  ldmx_log(debug) << "  captureDeexcitationProducts: " << n_secondaries
                   << " secondaries in final state";
 
   // Build a set of cascade escaped particles for matching
@@ -540,70 +548,70 @@ void LDMXCascadeInterface::captureDeexcitationProducts(
   // Note: We use approximate energy matching because the cascade and
   // final state energies may differ slightly due to nuclear recoil
   struct EscapedParticle {
-    int pdg;
-    double energy;  // MeV
-    bool matched;
+    int pdg_;
+    double energy_;  // MeV
+    bool matched_;
   };
-  std::vector<EscapedParticle> cascadeEscaped;
+  std::vector<EscapedParticle> cascade_escaped;
 
   for (const auto& step : lastHistory_.getSteps()) {
     if (step.didEscape()) {
-      cascadeEscaped.push_back({step.getPdgId(), step.getEnergy(), false});
+      cascade_escaped.push_back({step.getPdgId(), step.getEnergy(), false});
     }
   }
 
-  ldmx_log(debug) << "  Cascade escaped particles: " << cascadeEscaped.size();
+  ldmx_log(debug) << "  Cascade escaped particles: " << cascade_escaped.size();
 
   // Get the next available history ID for de-excitation products
-  int nextHistoryId = 0;
+  int next_history_id = 0;
   for (const auto& step : lastHistory_.getSteps()) {
-    if (step.getHistoryId() >= nextHistoryId) {
-      nextHistoryId = step.getHistoryId() + 1;
+    if (step.getHistoryId() >= next_history_id) {
+      next_history_id = step.getHistoryId() + 1;
     }
   }
 
   // Track de-excitation product counts by type
-  int nDeexcitationGammas = 0;
-  int nDeexcitationNeutrons = 0;
-  int nDeexcitationProtons = 0;
-  int nDeexcitationAlphas = 0;
-  int nDeexcitationOther = 0;
+  int n_deexcitation_gammas = 0;
+  int n_deexcitation_neutrons = 0;
+  int n_deexcitation_protons = 0;
+  int n_deexcitation_alphas = 0;
+  int n_deexcitation_other = 0;
 
   // Loop over final state secondaries
-  for (int i = 0; i < nSecondaries; ++i) {
+  for (int i = 0; i < n_secondaries; ++i) {
     G4HadSecondary* secondary = finalState->GetSecondary(i);
     if (!secondary) continue;
 
-    const G4DynamicParticle* dynParticle = secondary->GetParticle();
-    if (!dynParticle) continue;
+    const G4DynamicParticle* dyn_particle = secondary->GetParticle();
+    if (!dyn_particle) continue;
 
-    int pdg = dynParticle->GetPDGcode();
-    double energy = dynParticle->GetTotalEnergy();  // MeV
+    int pdg = dyn_particle->GetPDGcode();
+    double energy = dyn_particle->GetTotalEnergy();  // MeV
 
     // Try to match with cascade escaped particles
-    bool isDeexcitation = true;
-    const double energyTolerance = 1.0;  // 1 MeV tolerance
+    bool is_deexcitation = true;
+    const double energy_tolerance = 1.0;  // 1 MeV tolerance
 
-    for (auto& escaped : cascadeEscaped) {
-      if (!escaped.matched && escaped.pdg == pdg &&
-          std::abs(escaped.energy - energy) < energyTolerance) {
+    for (auto& escaped : cascade_escaped) {
+      if (!escaped.matched_ && escaped.pdg_ == pdg &&
+          std::abs(escaped.energy_ - energy) < energy_tolerance) {
         // Found a match - this is a cascade product, not de-excitation
-        escaped.matched = true;
-        isDeexcitation = false;
+        escaped.matched_ = true;
+        is_deexcitation = false;
         break;
       }
     }
 
-    if (isDeexcitation) {
+    if (is_deexcitation) {
       // This is a de-excitation product - add to history
       ldmx::CascadeStep step;
 
-      step.setHistoryId(nextHistoryId++);
+      step.setHistoryId(next_history_id++);
       step.setParentId(-2);  // Special marker for de-excitation origin
       step.setPdgId(pdg);
 
       // Get momentum (Geant4 uses MeV)
-      G4ThreeVector mom = dynParticle->GetMomentum();
+      G4ThreeVector mom = dyn_particle->GetMomentum();
       step.setMomentum(mom.x(), mom.y(), mom.z(), energy);
 
       // De-excitation products don't have a position in the cascade history
@@ -624,25 +632,25 @@ void LDMXCascadeInterface::captureDeexcitationProducts(
 
       // Count by type
       if (pdg == 22) {
-        nDeexcitationGammas++;
+        n_deexcitation_gammas++;
       } else if (pdg == 2112) {
-        nDeexcitationNeutrons++;
+        n_deexcitation_neutrons++;
       } else if (pdg == 2212) {
-        nDeexcitationProtons++;
+        n_deexcitation_protons++;
       } else if (pdg == 1000020040) {
-        nDeexcitationAlphas++;
+        n_deexcitation_alphas++;
       } else {
-        nDeexcitationOther++;
+        n_deexcitation_other++;
       }
     }
   }
 
-  ldmx_log(debug) << "  De-excitation products: "
-                  << "gammas=" << nDeexcitationGammas
-                  << ", neutrons=" << nDeexcitationNeutrons
-                  << ", protons=" << nDeexcitationProtons
-                  << ", alphas=" << nDeexcitationAlphas
-                  << ", other=" << nDeexcitationOther;
+  ldmx_log(debug) << "  De-excitation products: " << "gammas="
+                  << n_deexcitation_gammas
+                  << ", neutrons=" << n_deexcitation_neutrons
+                  << ", protons=" << n_deexcitation_protons
+                  << ", alphas=" << n_deexcitation_alphas
+                  << ", other=" << n_deexcitation_other;
 }
 
 }  // namespace bertini

@@ -3,7 +3,8 @@
  * @brief Photonuclear model that captures Bertini cascade history
  *
  * This model replaces the default Bertini cascade with LDMXCascadeInterface,
- * which captures the internal cascade history for each photonuclear interaction.
+ * which captures the internal cascade history for each photonuclear
+ * interaction.
  */
 
 #ifndef SIMCORE_BERTINI_BERTINIWITHHISTORYMODEL_H
@@ -24,8 +25,9 @@ class LDMXCascadeInterface;
  * @class BertiniWithHistoryModel
  * @brief PhotoNuclear model that records Bertini cascade history
  *
- * This model uses LDMXCascadeInterface instead of the default G4CascadeInterface
- * to capture the internal cascade history for each photonuclear interaction.
+ * This model uses LDMXCascadeInterface instead of the default
+ * G4CascadeInterface to capture the internal cascade history for each
+ * photonuclear interaction.
  *
  * The captured histories are stored in CascadeHistoryStore and can be retrieved
  * during event finalization to be added to the event output.
@@ -56,17 +58,17 @@ class BertiniWithHistoryModel : public PhotoNuclearModel {
 
  private:
   /** Maximum energy for the model [MeV] */
-  double maxEnergy_{15000.0};  // 15 GeV default
+  double max_energy_{15000.0};  // 15 GeV default
 
   /** Whether to record history (can be disabled for performance) */
-  bool recordHistory_{true};
+  bool record_history_{true};
 
   /**
    * Minimum photon energy to record history [MeV]
    * Only cascades initiated by photons above this energy will be recorded.
    * Default: 5000 MeV (5 GeV), matching typical ECal PN bias threshold.
    */
-  double energyThreshold_{5000.0};
+  double energy_threshold_{5000.0};
 
   enableLogging("BertiniWithHistoryModel")
 };
