@@ -10,9 +10,10 @@ class BertiniModel(simcfg.PhotoNuclearModel):
     """
 
     def __init__(self):
-        super().__init__('BertiniModel',
-                         'simcore::BertiniModel',
-                         'SimCore_PhotoNuclearModels')
+        super().__init__(
+            "BertiniModel", "simcore::BertiniModel", "SimCore_PhotoNuclearModels"
+        )
+
 
 class BertiniNothingHardModel(simcfg.PhotoNuclearModel):
     """A photonuclear model producing only topologies with no particles above a
@@ -67,13 +68,17 @@ class BertiniNothingHardModel(simcfg.PhotoNuclearModel):
         nucleus.
         """
 
-        super().__init__('BertiniNothingHardModel',
-                         'simcore::BertiniNothingHardModel',
-                         'SimCore_PhotoNuclearModels')
+        super().__init__(
+            "BertiniNothingHardModel",
+            "simcore::BertiniNothingHardModel",
+            "SimCore_PhotoNuclearModels",
+        )
         self.count_light_ions = True
-        self.hard_particle_threshold = 200.
+        self.hard_particle_threshold = 200.0
         self.zmin = 74
-        self.emin = 2500.
+        self.emin = 2500.0
+
+
 class BertiniSingleNeutronModel(simcfg.PhotoNuclearModel):
     """A photonuclear model producing only topologies where only one neutron has
     kinetic energy above a particular threshold.
@@ -83,18 +88,19 @@ class BertiniSingleNeutronModel(simcfg.PhotoNuclearModel):
     """
 
     def __init__(self):
-        super().__init__('BertiniSingleNeutronModel',
-                         'simcore::BertiniSingleNeutronModel',
-                         'SimCore_PhotoNuclearModels')
-        self.hard_particle_threshold = 200.
+        super().__init__(
+            "BertiniSingleNeutronModel",
+            "simcore::BertiniSingleNeutronModel",
+            "SimCore_PhotoNuclearModels",
+        )
+        self.hard_particle_threshold = 200.0
         self.zmin = 0
-        self.emin = 2500.
+        self.emin = 2500.0
         self.count_light_ions = True
 
 
-
 class BertiniAtLeastNProductsModel(simcfg.PhotoNuclearModel):
-    """ A photonuclear model producing only topologies with no particles above a
+    """A photonuclear model producing only topologies with no particles above a
     certain threshold.
 
     Uses the default Bertini model from Geant4.
@@ -102,33 +108,33 @@ class BertiniAtLeastNProductsModel(simcfg.PhotoNuclearModel):
     """
 
     def __init__(self, name):
-        super().__init__(name,
-                         'simcore::BertiniAtLeastNProductsModel',
-                         'SimCore_PhotoNuclearModels')
-        self.hard_particle_threshold = 200.
+        super().__init__(
+            name, "simcore::BertiniAtLeastNProductsModel", "SimCore_PhotoNuclearModels"
+        )
+        self.hard_particle_threshold = 200.0
         self.zmin = 0
-        self.emin = 2500.
+        self.emin = 2500.0
         self.min_products = 1
         self.pdg_ids = []
 
-    def kaon(min_products = 1, hard_particle_threshold=200.):
+    def kaon(min_products=1, hard_particle_threshold=200.0):
         # Note: By default, this is requiring at least 1 kaon with at least 200
         # MeV. You may want a different energy threshold depending on your needs.
         model = BertiniAtLeastNProductsModel(f"{min_products}_kaon_model")
-        model.hard_particle_threshold=hard_particle_threshold
+        model.hard_particle_threshold = hard_particle_threshold
         model.pdg_ids = [
-                130,  # K_L^0
-                310,  # K_S^0
-                311,  # K^0
-                321,  # K^+
-                -321, # K^-
+            130,  # K_L^0
+            310,  # K_S^0
+            311,  # K^0
+            321,  # K^+
+            -321,  # K^-
         ]
         model.min_products = min_products
         return model
 
 
 class BertiniExactlyNProductsModel(simcfg.PhotoNuclearModel):
-    """ A photonuclear model producing only topologies with a define number
+    """A photonuclear model producing only topologies with a define number
     of particles above a certain threshold.
 
     Uses the default Bertini model from Geant4.
@@ -136,34 +142,34 @@ class BertiniExactlyNProductsModel(simcfg.PhotoNuclearModel):
     """
 
     def __init__(self, name):
-        super().__init__(name,
-                         'simcore::BertiniExactlyNProductsModel',
-                         'SimCore_PhotoNuclearModels')
-        self.hard_particle_threshold = 200.
+        super().__init__(
+            name, "simcore::BertiniExactlyNProductsModel", "SimCore_PhotoNuclearModels"
+        )
+        self.hard_particle_threshold = 200.0
         self.zmin = 0
-        self.emin = 2500.
+        self.emin = 2500.0
         self.n_products = 1
         self.check_allmatch = False
         self.pdg_ids = []
 
-    def kaon(n_products = 2, hard_particle_threshold=200.):
+    def kaon(n_products=2, hard_particle_threshold=200.0):
         # This is requiring exactly 2 kaons with at least 200 MeV.
         model = BertiniExactlyNProductsModel(f"{n_products}_kaon_model")
-        model.hard_particle_threshold=hard_particle_threshold
+        model.hard_particle_threshold = hard_particle_threshold
         model.pdg_ids = [
-                130,  # K_L^0
-                310,  # K_S^0
-                311,  # K^0
-                321,  # K^+
-                -321, # K^-
+            130,  # K_L^0
+            310,  # K_S^0
+            311,  # K^0
+            321,  # K^+
+            -321,  # K^-
         ]
         model.n_products = n_products
         return model
 
-    def neutron(n_products = 1, hard_particle_threshold=200.):
+    def neutron(n_products=1, hard_particle_threshold=200.0):
         # This is requiring exactly 1 neutron with at least 200 MeV
         model = BertiniExactlyNProductsModel(f"{n_products}_neutron_model")
-        model.hard_particle_threshold=hard_particle_threshold
+        model.hard_particle_threshold = hard_particle_threshold
         model.pdg_ids = [2212]
         model.n_products = n_products
         return model
@@ -176,7 +182,36 @@ class NoPhotoNuclearModel(simcfg.PhotoNuclearModel):
     when using this model.
 
     """
+
     def __init__(self):
-        super().__init__('NoPhotoNuclearModel',
-                         'simcore::NoPhotoNuclearModel',
-                         'SimCore_PhotoNuclearModels')
+        super().__init__(
+            "NoPhotoNuclearModel",
+            "simcore::NoPhotoNuclearModel",
+            "SimCore_PhotoNuclearModels",
+        )
+
+
+class BertiniWithHistoryModel(simcfg.PhotoNuclearModel):
+    """Bertini cascade with internal history recording.
+
+    Uses the standard Bertini cascade but captures the step-by-step cascade
+    history for each photonuclear interaction. The history includes all particles,
+    parent-daughter relationships, momenta, positions, and quasi-deuteron target
+    types (pp, pn, nn). Output is stored as "PhotonuclearCascadeHistories".
+    """
+
+    def __init__(self):
+        """
+        By default, only cascades initiated by photons above 5 GeV are recorded
+        (matching the typical ECal PN bias threshold).
+
+            model = BertiniWithHistoryModel()
+            model.energy_threshold = 2500.0  # record above 2.5 GeV
+        """
+        super().__init__(
+            "BertiniWithHistoryModel",
+            "simcore::bertini::BertiniWithHistoryModel",
+            "SimCore_Bertini",
+        )
+        self.max_energy = 15000.0
+        self.energy_threshold = 5000.0
