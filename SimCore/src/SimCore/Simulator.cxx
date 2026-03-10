@@ -134,6 +134,7 @@ void Simulator::produce(framework::Event& event) {
   if (hepmc3_events.size() > 0) event.add("SimHepMC3Events", hepmc3_events);
 
   saveTracks(event);
+  saveTrajectories(event);
 
   saveSDHits(event);
 

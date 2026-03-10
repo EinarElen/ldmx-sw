@@ -58,6 +58,7 @@ void ReSimulator::produce(framework::Event& event) {
   event_header.setEventNumber(++events_resimulated_);
   updateEventHeader(event_header);
   saveTracks(event);
+  saveTrajectories(event);
 
   saveSDHits(event);
 

@@ -2,9 +2,11 @@
 #define SIMCORE_USEREVENTINFORMATION_H
 
 #include <vector>
+#include <map>
 
 #include "G4VUserEventInformation.hh"
 #include "SimCore/Event/HepMC3GenEvent.h"
+#include "SimCore/Event/SimTrajectory.h"
 
 namespace simcore {
 
@@ -128,6 +130,52 @@ class UserEventInformation : public G4VUserEventInformation {
     return hepmc3_events_;
   }
 
+  void upsertTrajectory(int trackID, int parentID, int pdgID,
+                        const std::string& role) {
+    auto& trajectory = trajectories_[trackID];
+    trajectory.setTrackID(trackID);
+    trajectory.setParentID(parentID);
+    trajectory.setPdgID(pdgID);
+    if (!role.empty()) trajectory.setRole(role);
+  }
+
+  bool hasTrajectory(int trackID) const {
+    return trajectories_.find(trackID) != trajectories_.end();
+  }
+
+  void appendTrajectoryPoint(int trackID, const ldmx::SimTrajectoryPoint& point) {
+    auto it = trajectories_.find(trackID);
+    if (it == trajectories_.end()) return;
+    it->second.addPoint(point);
+  }
+
+  std::size_t trajectoryPointCount(int trackID) const {
+    auto it = trajectories_.find(trackID);
+    if (it == trajectories_.end()) return 0;
+    return it->second.getPoints().size();
+  }
+
+  void setTrajectoryRole(int trackID, const std::string& role) {
+    auto it = trajectories_.find(trackID);
+    if (it == trajectories_.end()) return;
+    it->second.setRole(role);
+  }
+
+  std::string getTrajectoryRole(int trackID) const {
+    auto it = trajectories_.find(trackID);
+    if (it == trajectories_.end()) return "";
+    return it->second.getRole();
+  }
+
+  std::vector<ldmx::SimTrajectory> getTrajectories() const {
+    std::vector<ldmx::SimTrajectory> out;
+    out.reserve(trajectories_.size());
+    for (const auto& [_, trajectory] : trajectories_) {
+      out.push_back(trajectory);
+    }
+    return out;
+  }
+
  private:
   /// Total number of brem candidates in the event
   int brem_candidate_count_{0};
@@ -181,6 +229,11 @@ class UserEventInformation : public G4VUserEventInformation {
    * a collection of HepMC3 event records.
    */
   std::vector<ldmx::HepMC3GenEvent> hepmc3_events_;
+
+  /**
+   * a collection of detailed per-track trajectories for visualization.
+   */
+  std::map<int, ldmx::SimTrajectory> trajectories_;
 };
 }  // namespace simcore
 

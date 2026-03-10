@@ -1,5 +1,7 @@
 #include "SimCore/SimulatorBase.h"
 
+#include <algorithm>
+
 namespace simcore {
 
 const std::vector<std::string> SimulatorBase::INVALID_COMMANDS = {
@@ -157,6 +159,26 @@ void SimulatorBase::saveTracks(framework::Event& event) {
   tracks.traceAncestry();
   event.add("SimParticles", tracks.getParticleMap());
 }
+
+void SimulatorBase::saveTrajectories(framework::Event& event) {
+  auto* event_info = static_cast<UserEventInformation*>(
+      run_manager_->GetCurrentEvent()->GetUserInformation());
+  auto trajectories = event_info->getTrajectories();
+  trajectories.erase(
+      std::remove_if(trajectories.begin(), trajectories.end(),
+                     [](const auto& trajectory) {
+                       return trajectory.getPoints().size() < 2;
+                     }),
+      trajectories.end());
+  if (trajectories.empty()) return;
+
+  std::sort(trajectories.begin(), trajectories.end(),
+            [](const auto& left, const auto& right) {
+              return left.getTrackID() < right.getTrackID();
+            });
+  event.add("VisTrajectories", trajectories);
+}
+
 void SimulatorBase::saveSDHits(framework::Event& event) {
   // Copy hit objects from SD hit collections into the output event.
   SensitiveDetector::Factory::get().apply([&event](auto sd) {

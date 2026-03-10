@@ -77,7 +77,10 @@ def photo_nuclear( detector, generator ) :
             # Only consider events where a hard brem occurs
             filters.TargetBremFilter(recoil_max_p = recoil_max_p, brem_min_e = brem_min_e),
             # Only consider events where a PN reaction happnes in the ECal
-            filters.EcalProcessFilter(),     
+            filters.EcalProcessFilter(),
+            # Record detailed geometry-space trajectories for the retained
+            # beam electron, hard brem photon, and immediate PN daughters.
+            util.TrajectoryRecorder(),
             # Tag all photo-nuclear tracks to persist them to the event.
             util.TrackProcessFilter.photo_nuclear()
     ])
@@ -120,7 +123,8 @@ def nonfiducial_photo_nuclear( detector, generator ) :
             # Only considers events that are Non-Fiducial (Doesn't enter an ECal volume)
             filters.NonFiducialFilter(recoil_max_momentum = recoil_max_p),
             # Only consider events where a PN reaction happens in the ECal
-            filters.EcalProcessFilter(),     
+            filters.EcalProcessFilter(),
+            util.TrajectoryRecorder(),
             # Tag all photo-nuclear tracks to persist them to the event.
             util.TrackProcessFilter.photo_nuclear()
     ])

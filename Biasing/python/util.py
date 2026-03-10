@@ -36,6 +36,20 @@ class StepPrinter(BiasingUtilityAction) :
         self.track_id = track_id
         self.depth = depth
 
+class TrajectoryRecorder(BiasingUtilityAction) :
+    """Record visualization trajectories for selected photonuclear truth tracks.
+
+    Parameters
+    ----------
+    daughter_min_energy : float, optional
+        Minimum daughter total energy in MeV for PN daughters to keep in the
+        trajectory collection.
+    """
+
+    def __init__(self, daughter_min_energy = 50.) :
+        super().__init__('trajectory_recorder', 'TrajectoryRecorder')
+        self.daughter_min_energy = daughter_min_energy
+
 class PartialEnergySorter(BiasingUtilityAction) :
     """Process particles such that all particles above
     the input threshold are processed first.

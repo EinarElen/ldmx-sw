@@ -10,6 +10,10 @@
 #pragma link C++ class std::vector < ldmx::SimTrackerHit> + ;
 #pragma link C++ class ldmx::SimParticle + ;
 #pragma link C++ class std::map < int, ldmx::SimParticle> + ;
+#pragma link C++ class ldmx::SimTrajectoryPoint + ;
+#pragma link C++ class std::vector < ldmx::SimTrajectoryPoint> + ;
+#pragma link C++ class ldmx::SimTrajectory + ;
+#pragma link C++ class std::vector < ldmx::SimTrajectory> + ;
 #pragma link C++ class ldmx::EventWeights + ;
 #pragma link C++ class ldmx::HepMC3GenEvent + ;
 #pragma link C++ class std::vector < ldmx::HepMC3GenEvent> + ;
