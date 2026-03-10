@@ -1110,6 +1110,67 @@ class GenieTruthDQM(ldmxcfg.Analyzer) :
 sample_validation_dqm = [
         SampleValidation()
         ]
+
+class VisGenerator(ldmxcfg.Analyzer) :
+    """Generate Phoenix-compatible JSON event displays."""
+
+    def __init__(self, name='VisGenerator') :
+        super().__init__(name, 'dqm::VisGenerator', 'DQM')
+
+        self.includeGroundTruth = True
+        self.originIdAvailable = False
+        self.nbrOfElectrons = 2
+
+        self.ecalSimHitColl = 'EcalSimHits'
+        self.ecalSimHitPass = ''
+        self.includeHcalSimHits = False
+        self.hcalSimHitColl = 'HcalSimHits'
+        self.hcalSimHitPass = ''
+
+        self.visHitOrigin = False
+        self.truthFilename = 'truth.json'
+
+        self.includeEcalRecHits = True
+        self.ecalRecHitColl = 'EcalRecHits'
+        self.ecalRecHitPass = ''
+        self.includeHcalRecHits = False
+        self.hcalRecHitColl = 'HcalRecHits'
+        self.hcalRecHitPass = ''
+
+        self.includeEcalClusters = True
+        self.ecalClusterColl = 'EcalClusters'
+        self.ecalClusterPass = ''
+        self.includeEcalVeto = False
+        self.ecalVetoName = 'EcalVeto'
+        self.ecalVetoPass = ''
+        self.ecalVetoDiscCut = -1.
+        self.onlyInterestingEcalVetoEvents = False
+        self.ecalVetoNearThresholdWindow = 0.075
+        self.ecalVetoOutsideContainmentThreshold = 250.
+        self.ecalVetoBackEnergyThreshold = 150.
+        self.ecalVetoDeepLayerThreshold = 24
+        self.includeHcalVeto = False
+        self.hcalVetoName = 'HcalVeto'
+        self.hcalVetoPass = ''
+
+        self.visLayers = False
+        self.layerFilename = 'layers.json'
+
+        self.filename = 'vis.json'
+        self.simParticlePass = ''
+        self.includeSimParticles = True
+        self.includeVisualizationTrajectories = True
+        self.trajectoryColl = 'VisTrajectories'
+        self.trajectoryPass = ''
+        self.includeAllTruthTracks = False
+        self.truthTrackEnergyThreshold = 0.
+        self.sampleLabel = ''
+        self.sampleModel = ''
+        self.sampleSelection = ''
+        self.sampleDescription = ''
+
+        self.onlyIncludeEvents = [-1]
+        self.excludeEvents = [-1]
         
 class EcalClusterAnalyzer(ldmxcfg.Analyzer) :
     """Analyze clustering"""

@@ -7,28 +7,29 @@ mySim.description = 'Hcal Muons and Neutrons'
 mySim.setDetector( 'ldmx-det-v15-8gev' )
 from LDMX.SimCore import generators as gen
 
-# flat distribution of energy from 1GeV to 4GeV
-# vertex on x-y plane close to front of side hcal/ecal
-# angular distribution such that cos(theta) is flat from 0 to 1
-ene_ang_pos_cmds = [
+# flat distribution of energy from 1 GeV to 8 GeV
+# start near the ECAL entrance with a modest transverse spread
+# so the event develops through ECAL into HCAL rather than spraying
+# from a wide plane at the side of the detector
+beamline_cmds = [
         '/gps/ene/type Lin',
         '/gps/ene/min 1 GeV',
         '/gps/ene/max 8 GeV',
         '/gps/ene/gradient 0.',
         '/gps/ene/intercept 1.',
-        '/gps/ang/type cos',
+        '/gps/direction 0 0 1',
         '/gps/pos/type Plane',
         '/gps/pos/shape Square',
-        '/gps/pos/centre 0 0 220. mm', # start at side hcal
-        '/gps/pos/halfx 500 mm',
-        '/gps/pos/halfy 500 mm'
+        '/gps/pos/centre 0 0 235. mm',
+        '/gps/pos/halfx 80 mm',
+        '/gps/pos/halfy 80 mm'
         ]
 
 # one muon and one neutron both with the above initial kinematics
-gps_cmds = ['/gps/particle mu-'] + ene_ang_pos_cmds + [
+gps_cmds = ['/gps/particle mu-'] + beamline_cmds + [
         '/gps/source/add 1',
         '/gps/particle neutron'
-        ] + ene_ang_pos_cmds + [
+        ] + beamline_cmds + [
         '/gps/source/multiplevertex True'
         ]
 
