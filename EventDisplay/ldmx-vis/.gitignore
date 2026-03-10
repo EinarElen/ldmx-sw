@@ -1,0 +1,10 @@
+dist/
+node_modules/
+.vite/
+.angular/
+.yarn/
+coverage/
+
+npm-debug.log*
+.DS_Store
+Thumbs.db
